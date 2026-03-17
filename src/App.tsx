@@ -9,6 +9,7 @@ import UsersPage from "./pages/users/page.tsx";
 import TasksPage from "./pages/tasks/page.tsx";
 import ProjectsPage from "./pages/projects/page.tsx";
 import DivisionsPage from "./pages/divisions/page.tsx";
+import MyTasksPage from "./pages/my-tasks/page.tsx";
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="/tasks" element={<TasksPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/divisions" element={<DivisionsPage />} />
+            <Route path="/my-tasks" element={<MyTasksPage />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

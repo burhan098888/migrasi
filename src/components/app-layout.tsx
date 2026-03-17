@@ -17,6 +17,7 @@ import {
   Menu,
   X,
   Building2,
+  ClipboardList,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth.ts";
@@ -38,7 +39,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           { to: "/users", icon: Users, label: "Users" },
         ]
       : []),
-    { to: "/my-tasks", icon: FolderKanban, label: "My Tasks" },
+    { to: "/my-tasks", icon: ClipboardList, label: "My Tasks" },
     { to: "/analytics", icon: BarChart3, label: "Analytics" },
     { to: "/calendar", icon: CalendarDays, label: "Calendar" },
     { to: "/budget", icon: DollarSign, label: "Budget" },
@@ -48,7 +49,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
     toast.info(`${label} is coming soon in a future milestone!`);
   };
 
-  const availableRoutes = ["/dashboard", "/users", "/tasks", "/projects", "/divisions"];
+  const availableRoutes = ["/dashboard", "/users", "/tasks", "/projects", "/divisions", "/my-tasks"];
 
   return (
     <div className="flex flex-col h-full">

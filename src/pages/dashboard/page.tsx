@@ -65,7 +65,7 @@ export default function DashboardPage() {
       icon: FolderKanban,
       label: "My Tasks",
       description: "View your assigned tasks",
-      action: () => handleComingSoon("My Tasks"),
+      action: () => navigate("/my-tasks"),
     },
     {
       icon: LayoutDashboard,
