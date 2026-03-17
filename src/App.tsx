@@ -12,8 +12,11 @@ import DivisionsPage from "./pages/divisions/page.tsx";
 import MyTasksPage from "./pages/my-tasks/page.tsx";
 import AnalyticsPage from "./pages/analytics/page.tsx";
 import CalendarPage from "./pages/calendar/page.tsx";
+import { useServiceWorker } from "@/hooks/use-service-worker.ts";
 
 export default function App() {
+  useServiceWorker();
+
   return (
     <DefaultProviders>
       <BrowserRouter>
