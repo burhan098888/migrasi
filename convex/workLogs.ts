@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 
@@ -140,5 +140,16 @@ export const remove = mutation({
     }
 
     await ctx.db.delete(args.id);
+  },
+});
+
+export const clearAll = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const allLogs = await ctx.db.query("workLogs").collect();
+    for (const log of allLogs) {
+      await ctx.db.delete(log._id);
+    }
+    return { deleted: allLogs.length };
   },
 });
