@@ -151,19 +151,11 @@ export const update = mutation({
   },
 });
 
-// Staff can only update progress, status, notes
+// Staff can only update progress and notes (status is admin/manager only)
 export const updateMyTask = mutation({
   args: {
     id: v.id("tasks"),
     progressPercentage: v.optional(v.number()),
-    status: v.optional(
-      v.union(
-        v.literal("not_started"),
-        v.literal("in_progress"),
-        v.literal("complete"),
-        v.literal("overdue"),
-      ),
-    ),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<void> => {
@@ -181,7 +173,6 @@ export const updateMyTask = mutation({
     const cleanUpdates: Record<string, unknown> = {};
     if (args.progressPercentage !== undefined)
       cleanUpdates.progressPercentage = args.progressPercentage;
-    if (args.status !== undefined) cleanUpdates.status = args.status;
     if (args.notes !== undefined) cleanUpdates.notes = args.notes;
 
     await ctx.db.patch(args.id, cleanUpdates);

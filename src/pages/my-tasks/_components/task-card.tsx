@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
+import { useUserRole } from "@/hooks/use-user-role.ts";
 
 const STATUS_STYLES = {
   not_started: "bg-muted text-muted-foreground",
@@ -70,6 +71,8 @@ type TaskCardProps = {
 
 export default function TaskCard({ task }: TaskCardProps) {
   const updateMyTask = useMutation(api.tasks.updateMyTask);
+  const updateTask = useMutation(api.tasks.update);
+  const { isAdminOrManager } = useUserRole();
   const [expanded, setExpanded] = useState(false);
   const [progress, setProgress] = useState(task.progressPercentage);
   const [status, setStatus] = useState(task.status);
@@ -78,7 +81,7 @@ export default function TaskCard({ task }: TaskCardProps) {
 
   const hasChanges =
     progress !== task.progressPercentage ||
-    status !== task.status ||
+    (isAdminOrManager && status !== task.status) ||
     notes !== task.notes;
 
   const isOverdue =
@@ -90,12 +93,22 @@ export default function TaskCard({ task }: TaskCardProps) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateMyTask({
-        id: task._id,
-        progressPercentage: progress,
-        status,
-        notes,
-      });
+      if (isAdminOrManager) {
+        // Admin/manager can update status
+        await updateTask({
+          id: task._id,
+          progressPercentage: progress,
+          status,
+          notes,
+        });
+      } else {
+        // Staff can only update progress and notes
+        await updateMyTask({
+          id: task._id,
+          progressPercentage: progress,
+          notes,
+        });
+      }
       toast.success("Task updated");
     } catch {
       toast.error("Failed to update task");
@@ -104,14 +117,16 @@ export default function TaskCard({ task }: TaskCardProps) {
     }
   };
 
-  // Auto-set status when progress changes
+  // Auto-set status when progress changes (only for admin/manager)
   const handleProgressChange = (value: number[]) => {
     const newProgress = value[0];
     setProgress(newProgress);
-    if (newProgress === 100 && status !== "complete") {
-      setStatus("complete");
-    } else if (newProgress > 0 && newProgress < 100 && status === "not_started") {
-      setStatus("in_progress");
+    if (isAdminOrManager) {
+      if (newProgress === 100 && status !== "complete") {
+        setStatus("complete");
+      } else if (newProgress > 0 && newProgress < 100 && status === "not_started") {
+        setStatus("in_progress");
+      }
     }
   };
 
@@ -232,33 +247,42 @@ export default function TaskCard({ task }: TaskCardProps) {
               />
             </div>
 
-            {/* Status */}
+            {/* Status — editable for admin/manager, read-only for staff */}
             <div className="mt-4">
               <label className="text-sm font-medium text-foreground mb-1.5 block">
                 Status
               </label>
-              <Select
-                value={status}
-                onValueChange={(val) =>
-                  setStatus(
-                    val as
-                      | "not_started"
-                      | "in_progress"
-                      | "complete"
-                      | "overdue",
-                  )
-                }
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="not_started">Not Started</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="complete">Complete</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                </SelectContent>
-              </Select>
+              {isAdminOrManager ? (
+                <Select
+                  value={status}
+                  onValueChange={(val) =>
+                    setStatus(
+                      val as
+                        | "not_started"
+                        | "in_progress"
+                        | "complete"
+                        | "overdue",
+                    )
+                  }
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_started">Not Started</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="complete">Complete</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Badge
+                  variant="secondary"
+                  className={`text-xs ${STATUS_STYLES[task.status]}`}
+                >
+                  {STATUS_LABELS[task.status]}
+                </Badge>
+              )}
             </div>
 
             {/* Notes / Remarks */}
