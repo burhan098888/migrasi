@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as analytics from "../analytics.js";
 import type * as divisions from "../divisions.js";
 import type * as helpers from "../helpers.js";
 import type * as holidays from "../holidays.js";
@@ -22,6 +23,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  analytics: typeof analytics;
   divisions: typeof divisions;
   helpers: typeof helpers;
   holidays: typeof holidays;

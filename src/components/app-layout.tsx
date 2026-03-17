@@ -49,7 +49,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
     toast.info(`${label} is coming soon in a future milestone!`);
   };
 
-  const availableRoutes = ["/dashboard", "/users", "/tasks", "/projects", "/divisions", "/my-tasks"];
+  const availableRoutes = ["/dashboard", "/users", "/tasks", "/projects", "/divisions", "/my-tasks", "/analytics"];
 
   return (
     <div className="flex flex-col h-full">

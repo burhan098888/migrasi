@@ -71,7 +71,7 @@ export default function DashboardPage() {
       icon: LayoutDashboard,
       label: "Analytics",
       description: "View project analytics",
-      action: () => handleComingSoon("Analytics"),
+      action: () => navigate("/analytics"),
     },
   ];
 
