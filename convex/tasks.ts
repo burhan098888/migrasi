@@ -184,6 +184,44 @@ export const updateMyTask = mutation({
   },
 });
 
+// Staff can create their own tasks — status defaults to "not_started", assignee is themselves
+export const createMyTask = mutation({
+  args: {
+    title: v.string(),
+    projectId: v.id("projects"),
+    divisionId: v.optional(v.id("divisions")),
+    priority: v.union(
+      v.literal("low"),
+      v.literal("medium"),
+      v.literal("high"),
+    ),
+    deadline: v.string(),
+    budgetAllocated: v.number(),
+    budgetRealized: v.number(),
+    notes: v.string(),
+  },
+  handler: async (ctx, args): Promise<void> => {
+    const user = await getCurrentUser(ctx);
+    await ctx.db.insert("tasks", {
+      title: args.title,
+      projectId: args.projectId,
+      divisionId: args.divisionId,
+      assigneeId: user._id,
+      priority: args.priority,
+      deadline: args.deadline,
+      budgetAllocated: args.budgetAllocated,
+      budgetRealized: args.budgetRealized,
+      status: "not_started",
+      progressPercentage: 0,
+      notes: args.notes,
+    });
+    // Recalculate project progress
+    await ctx.runMutation(api.projects.recalculateProgress, {
+      projectId: args.projectId,
+    });
+  },
+});
+
 export const remove = mutation({
   args: { id: v.id("tasks") },
   handler: async (ctx, args): Promise<void> => {

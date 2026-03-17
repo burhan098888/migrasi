@@ -16,10 +16,13 @@ import {
   EmptyMedia,
   EmptyTitle,
   EmptyDescription,
+  EmptyContent,
 } from "@/components/ui/empty.tsx";
 import { useEffect, useState, useMemo } from "react";
-import { ClipboardList, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { ClipboardList, CheckCircle2, Clock, AlertTriangle, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button.tsx";
 import TaskCard from "./_components/task-card.tsx";
+import StaffTaskDialog from "./_components/staff-task-dialog.tsx";
 
 type StatusFilter = "all" | "not_started" | "in_progress" | "complete" | "overdue";
 type PriorityFilter = "all" | "low" | "medium" | "high";
@@ -31,6 +34,7 @@ export default function MyTasksPage() {
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all");
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   // Mark overdue tasks on mount
   useEffect(() => {
@@ -80,11 +84,17 @@ export default function MyTasksPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
-        <p className="text-muted-foreground mt-1">
-          Your personal workspace — update progress and leave remarks
-        </p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
+          <p className="text-muted-foreground mt-1">
+            Create your own tasks and track progress — admins approve status
+          </p>
+        </div>
+        <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+          <Plus className="w-4 h-4 mr-1" />
+          New Task
+        </Button>
       </div>
 
       {/* Stats cards */}
@@ -172,15 +182,23 @@ export default function MyTasksPage() {
             </EmptyMedia>
             <EmptyTitle>
               {tasks.length === 0
-                ? "No tasks assigned to you"
+                ? "No tasks yet"
                 : "No matching tasks"}
             </EmptyTitle>
             <EmptyDescription>
               {tasks.length === 0
-                ? "Ask your manager to assign tasks to you"
+                ? "Create your first task to get started"
                 : "Try adjusting your filters"}
             </EmptyDescription>
           </EmptyHeader>
+          {tasks.length === 0 && (
+            <EmptyContent>
+              <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-1" />
+                New Task
+              </Button>
+            </EmptyContent>
+          )}
         </Empty>
       ) : (
         <div className="space-y-3">
@@ -189,6 +207,12 @@ export default function MyTasksPage() {
           ))}
         </div>
       )}
+
+      {/* Staff create task dialog */}
+      <StaffTaskDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+      />
     </div>
   );
 }
