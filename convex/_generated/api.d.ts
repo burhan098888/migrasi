@@ -15,6 +15,7 @@ import type * as holidays from "../holidays.js";
 import type * as projects from "../projects.js";
 import type * as tasks from "../tasks.js";
 import type * as users from "../users.js";
+import type * as workLogs from "../workLogs.js";
 
 import type {
   ApiFromModules,
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   projects: typeof projects;
   tasks: typeof tasks;
   users: typeof users;
+  workLogs: typeof workLogs;
 }>;
 
 /**

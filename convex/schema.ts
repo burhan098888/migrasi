@@ -59,4 +59,14 @@ export default defineSchema({
     date: v.string(),
     eventName: v.string(),
   }),
+
+  workLogs: defineTable({
+    date: v.string(),
+    picName: v.string(),
+    category: v.string(),
+    description: v.string(),
+  })
+    .index("by_date", ["date"])
+    .index("by_picName", ["picName"])
+    .index("by_category", ["category"]),
 });
