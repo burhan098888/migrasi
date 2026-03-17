@@ -8,6 +8,11 @@
  * @module
  */
 
+import type * as divisions from "../divisions.js";
+import type * as helpers from "../helpers.js";
+import type * as holidays from "../holidays.js";
+import type * as projects from "../projects.js";
+import type * as tasks from "../tasks.js";
 import type * as users from "../users.js";
 
 import type {
@@ -17,6 +22,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  divisions: typeof divisions;
+  helpers: typeof helpers;
+  holidays: typeof holidays;
+  projects: typeof projects;
+  tasks: typeof tasks;
   users: typeof users;
 }>;
 
