@@ -1,5 +1,3 @@
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api.js";
 import { useUserRole } from "@/hooks/use-user-role.ts";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import {
@@ -8,11 +6,12 @@ import {
   Users,
   FolderKanban,
   ArrowRight,
+  Building2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-export default function DashboardRedirect() {
+export default function DashboardPage() {
   const { user, isAdminOrManager } = useUserRole();
   const navigate = useNavigate();
 
@@ -40,12 +39,24 @@ export default function DashboardRedirect() {
             icon: ListTodo,
             label: "Task Manager",
             description: "Create and assign tasks",
-            action: () => handleComingSoon("Task Manager"),
+            action: () => navigate("/tasks"),
+          },
+          {
+            icon: FolderKanban,
+            label: "Projects",
+            description: "Manage projects and timelines",
+            action: () => navigate("/projects"),
+          },
+          {
+            icon: Building2,
+            label: "Divisions",
+            description: "Manage organizational divisions",
+            action: () => navigate("/divisions"),
           },
           {
             icon: Users,
             label: "Manage Users",
-            description: "Set roles and divisions",
+            description: "Set roles and permissions",
             action: () => navigate("/users"),
           },
         ]
@@ -80,7 +91,7 @@ export default function DashboardRedirect() {
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {quickLinks.map((link) => (
           <button
             key={link.label}

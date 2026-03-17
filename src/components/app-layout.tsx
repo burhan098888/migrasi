@@ -16,6 +16,7 @@ import {
   LogOut,
   Menu,
   X,
+  Building2,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth.ts";
@@ -32,6 +33,8 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
     ...(isAdminOrManager
       ? [
           { to: "/tasks", icon: ListTodo, label: "Task Manager" },
+          { to: "/projects", icon: FolderKanban, label: "Projects" },
+          { to: "/divisions", icon: Building2, label: "Divisions" },
           { to: "/users", icon: Users, label: "Users" },
         ]
       : []),
@@ -45,7 +48,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
     toast.info(`${label} is coming soon in a future milestone!`);
   };
 
-  const availableRoutes = ["/dashboard", "/users"];
+  const availableRoutes = ["/dashboard", "/users", "/tasks", "/projects", "/divisions"];
 
   return (
     <div className="flex flex-col h-full">

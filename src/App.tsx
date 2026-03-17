@@ -4,8 +4,11 @@ import AuthCallback from "./pages/auth/Callback.tsx";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import AppLayout from "./components/app-layout.tsx";
-import DashboardRedirect from "./pages/dashboard/page.tsx";
+import DashboardPage from "./pages/dashboard/page.tsx";
 import UsersPage from "./pages/users/page.tsx";
+import TasksPage from "./pages/tasks/page.tsx";
+import ProjectsPage from "./pages/projects/page.tsx";
+import DivisionsPage from "./pages/divisions/page.tsx";
 
 export default function App() {
   return (
@@ -15,8 +18,11 @@ export default function App() {
           <Route path="/" element={<Index />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route element={<AppLayout />}>
-            <Route path="/dashboard" element={<DashboardRedirect />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/users" element={<UsersPage />} />
+            <Route path="/tasks" element={<TasksPage />} />
+            <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/divisions" element={<DivisionsPage />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
