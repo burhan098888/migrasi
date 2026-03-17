@@ -1,4 +1,5 @@
 import { ConvexError } from "convex/values";
+import { v } from "convex/values";
 import { query } from "./_generated/server";
 
 export const getSummary = query({
@@ -130,5 +131,116 @@ export const getSummary = query({
       divisionWorkload,
       topPerformers,
     };
+  },
+});
+
+export const getUserAnalytics = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        code: "UNAUTHENTICATED",
+        message: "User not logged in",
+      });
+    }
+
+    const [tasks, projects, users] = await Promise.all([
+      ctx.db.query("tasks").collect(),
+      ctx.db.query("projects").collect(),
+      ctx.db.query("users").collect(),
+    ]);
+
+    const projectMap = new Map(projects.map((p) => [p._id as string, p.name]));
+
+    // Build per-user analytics
+    const userStats: Record<
+      string,
+      {
+        name: string;
+        role: string;
+        totalTasks: number;
+        completed: number;
+        inProgress: number;
+        overdue: number;
+        notStarted: number;
+        avgProgress: number;
+        totalProgressSum: number;
+        budgetAllocated: number;
+        budgetRealized: number;
+        projectBreakdown: Record<string, { name: string; total: number; completed: number }>;
+      }
+    > = {};
+
+    for (const u of users) {
+      const uid = u._id as string;
+      userStats[uid] = {
+        name: u.name ?? "Unknown",
+        role: u.role,
+        totalTasks: 0,
+        completed: 0,
+        inProgress: 0,
+        overdue: 0,
+        notStarted: 0,
+        avgProgress: 0,
+        totalProgressSum: 0,
+        budgetAllocated: 0,
+        budgetRealized: 0,
+        projectBreakdown: {},
+      };
+    }
+
+    for (const t of tasks) {
+      const uid = t.assigneeId as string;
+      const stat = userStats[uid];
+      if (!stat) continue;
+
+      stat.totalTasks += 1;
+      stat.totalProgressSum += t.progressPercentage;
+      stat.budgetAllocated += t.budgetAllocated;
+      stat.budgetRealized += t.budgetRealized;
+
+      if (t.status === "complete") stat.completed += 1;
+      else if (t.status === "in_progress") stat.inProgress += 1;
+      else if (t.status === "overdue") stat.overdue += 1;
+      else stat.notStarted += 1;
+
+      // Project breakdown
+      const pid = t.projectId as string;
+      if (!stat.projectBreakdown[pid]) {
+        stat.projectBreakdown[pid] = {
+          name: projectMap.get(pid) ?? "Unknown",
+          total: 0,
+          completed: 0,
+        };
+      }
+      stat.projectBreakdown[pid].total += 1;
+      if (t.status === "complete") stat.projectBreakdown[pid].completed += 1;
+    }
+
+    // Convert to array and compute avg
+    const userAnalytics = Object.values(userStats)
+      .filter((u) => u.totalTasks > 0)
+      .map((u) => ({
+        name: u.name,
+        role: u.role,
+        totalTasks: u.totalTasks,
+        completed: u.completed,
+        inProgress: u.inProgress,
+        overdue: u.overdue,
+        notStarted: u.notStarted,
+        completionRate:
+          u.totalTasks > 0 ? Math.round((u.completed / u.totalTasks) * 100) : 0,
+        avgProgress:
+          u.totalTasks > 0 ? Math.round(u.totalProgressSum / u.totalTasks) : 0,
+        budgetAllocated: u.budgetAllocated,
+        budgetRealized: u.budgetRealized,
+        projectBreakdown: Object.values(u.projectBreakdown).sort(
+          (a, b) => b.total - a.total,
+        ),
+      }))
+      .sort((a, b) => b.totalTasks - a.totalTasks);
+
+    return userAnalytics;
   },
 });

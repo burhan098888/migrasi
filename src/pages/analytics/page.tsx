@@ -18,6 +18,7 @@ import ProjectProgressChart from "./_components/project-progress-chart.tsx";
 import BudgetChart from "./_components/budget-chart.tsx";
 import DivisionWorkloadChart from "./_components/division-workload-chart.tsx";
 import TopPerformersTable from "./_components/top-performers-table.tsx";
+import UserAnalyticsCards from "./_components/user-analytics-cards.tsx";
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -36,6 +37,7 @@ function formatCurrency(v: number): string {
 
 export default function AnalyticsPage() {
   const analytics = useQuery(api.analytics.getSummary, {});
+  const userAnalytics = useQuery(api.analytics.getUserAnalytics, {});
 
   if (!analytics) {
     return (
@@ -136,6 +138,25 @@ export default function AnalyticsPage() {
         <ChartCard title="Top Performers">
           <TopPerformersTable data={analytics.topPerformers} />
         </ChartCard>
+      </div>
+
+      {/* User Analytics */}
+      <div>
+        <h2 className="text-lg font-bold text-foreground mb-1">
+          Analytics by User
+        </h2>
+        <p className="text-muted-foreground text-sm mb-4">
+          Detailed task breakdown for each team member
+        </p>
+        {userAnalytics ? (
+          <UserAnalyticsCards data={userAnalytics} />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <Skeleton key={i} className="h-64" />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
