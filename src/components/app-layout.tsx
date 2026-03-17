@@ -175,7 +175,7 @@ export default function AppLayout() {
           </aside>
 
           {/* Mobile header */}
-          <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-sidebar border-b border-sidebar-border px-4 py-3 flex items-center justify-between">
+          <div className="md:hidden fixed top-10 left-0 right-0 z-40 bg-sidebar border-b border-sidebar-border px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold text-xs flex items-center justify-center">
                 H
@@ -210,7 +210,7 @@ export default function AppLayout() {
           )}
 
           {/* Main content */}
-          <main className="flex-1 overflow-y-auto md:pt-0 pt-14">
+          <main className="flex-1 overflow-y-auto md:pt-0 pt-24">
             <Outlet />
           </main>
         </div>
