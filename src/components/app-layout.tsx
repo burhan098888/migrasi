@@ -9,7 +9,6 @@ import {
   Users,
   FolderKanban,
   CalendarDays,
-  DollarSign,
   BarChart3,
   ChevronLeft,
   ChevronRight,
@@ -42,7 +41,6 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
     { to: "/my-tasks", icon: ClipboardList, label: "My Tasks" },
     { to: "/analytics", icon: BarChart3, label: "Analytics" },
     { to: "/calendar", icon: CalendarDays, label: "Calendar" },
-    { to: "/budget", icon: DollarSign, label: "Budget" },
   ];
 
   const handleComingSoon = (label: string) => {
