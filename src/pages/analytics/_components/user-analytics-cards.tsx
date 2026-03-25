@@ -21,7 +21,12 @@ const ROLE_STYLES: Record<string, string> = {
   staff: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
 };
 
-export default function UserAnalyticsCards({ data }: { data: UserStat[] }) {
+type UserAnalyticsCardsProps = {
+  data: UserStat[];
+  onViewOverdue?: (userName: string) => void;
+};
+
+export default function UserAnalyticsCards({ data, onViewOverdue }: UserAnalyticsCardsProps) {
   if (data.length === 0) {
     return (
       <div className="flex items-center justify-center h-52 text-muted-foreground text-sm">
@@ -96,12 +101,28 @@ export default function UserAnalyticsCards({ data }: { data: UserStat[] }) {
               </p>
               <p className="text-[10px] text-muted-foreground">In Progress</p>
             </div>
-            <div className="bg-red-500/10 rounded-lg py-2 px-1">
-              <p className="text-lg font-bold text-red-600 dark:text-red-400">
-                {user.overdue}
-              </p>
-              <p className="text-[10px] text-muted-foreground">Overdue</p>
-            </div>
+            {/* Overdue - clickable if there are overdue tasks */}
+            {user.overdue > 0 && onViewOverdue ? (
+              <button
+                onClick={() => onViewOverdue(user.name)}
+                className="bg-red-500/10 rounded-lg py-2 px-1 hover:bg-red-500/20 transition-colors cursor-pointer"
+                title={`View ${user.overdue} overdue tasks for ${user.name}`}
+              >
+                <p className="text-lg font-bold text-red-600 dark:text-red-400">
+                  {user.overdue}
+                </p>
+                <p className="text-[10px] text-red-600 dark:text-red-400 font-medium underline underline-offset-2">
+                  Overdue
+                </p>
+              </button>
+            ) : (
+              <div className="bg-red-500/10 rounded-lg py-2 px-1">
+                <p className="text-lg font-bold text-red-600 dark:text-red-400">
+                  {user.overdue}
+                </p>
+                <p className="text-[10px] text-muted-foreground">Overdue</p>
+              </div>
+            )}
             <div className="bg-muted rounded-lg py-2 px-1">
               <p className="text-lg font-bold text-muted-foreground">
                 {user.notStarted}

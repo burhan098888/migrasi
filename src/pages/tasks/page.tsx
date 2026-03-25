@@ -21,9 +21,9 @@ import {
   EmptyContent,
 } from "@/components/ui/empty.tsx";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
-import { Plus, Pencil, Trash2, ListTodo } from "lucide-react";
+import { Plus, Pencil, Trash2, ListTodo, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import TaskFormDialog from "./_components/task-form-dialog.tsx";
 import TaskFiltersBar, {
@@ -69,22 +69,51 @@ type EnrichedTask = {
   divisionName: string | null;
 };
 
+const VALID_STATUSES = ["all", "not_started", "in_progress", "complete", "overdue"];
+
 export default function TasksPage() {
   const { user: currentUser, isAdminOrManager } = useUserRole();
   const tasks = useQuery(api.tasks.list);
+  const allUsers = useQuery(api.users.listAll);
   const markOverdue = useMutation(api.tasks.markOverdueTasks);
+  const updateTask = useMutation(api.tasks.update);
   const removeTask = useMutation(api.tasks.remove);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<EnrichedTask | null>(null);
+
+  // Read initial filter values from URL query params
+  const initialStatus = VALID_STATUSES.includes(searchParams.get("status") ?? "")
+    ? (searchParams.get("status") as string)
+    : "all";
+  const initialAssignee = searchParams.get("assignee") ?? "all";
+
+  // Resolve assignee name to ID if passed by name from analytics
+  const resolvedAssigneeId = useMemo(() => {
+    if (initialAssignee === "all") return "all";
+    // Check if it looks like a convex ID (starts with a specific pattern) or is a name
+    const matchedUser = allUsers?.find(
+      (u) => u.name === initialAssignee || u._id === initialAssignee,
+    );
+    return matchedUser?._id ?? "all";
+  }, [initialAssignee, allUsers]);
+
   const [filters, setFilters] = useState<TaskFilters>({
     projectId: "all",
     divisionId: "all",
-    assigneeId: "all",
-    status: "all",
+    assigneeId: resolvedAssigneeId,
+    status: initialStatus,
     priority: "all",
   });
+
+  // Update filters when URL-resolved assignee changes
+  useEffect(() => {
+    if (resolvedAssigneeId !== "all" && filters.assigneeId === "all") {
+      setFilters((prev) => ({ ...prev, assigneeId: resolvedAssigneeId }));
+    }
+  }, [resolvedAssigneeId, filters.assigneeId]);
 
   // Auto-mark overdue tasks on mount
   useEffect(() => {
@@ -120,6 +149,15 @@ export default function TasksPage() {
       return true;
     });
   }, [tasks, filters]);
+
+  // Clear URL params when filters change manually
+  const handleFiltersChange = (newFilters: TaskFilters) => {
+    setFilters(newFilters);
+    // Clear URL params since user is now manually filtering
+    if (searchParams.toString()) {
+      setSearchParams({});
+    }
+  };
 
   if (!tasks || !currentUser) {
     return (
@@ -158,15 +196,33 @@ export default function TasksPage() {
     }
   };
 
+  const handleMarkComplete = async (task: EnrichedTask) => {
+    try {
+      await updateTask({
+        id: task._id,
+        status: "complete",
+        progressPercentage: 100,
+      });
+      toast.success(`"${task.title}" marked as complete`);
+    } catch {
+      toast.error("Failed to update task status");
+    }
+  };
+
+  // Check if we're in "overdue view" mode from URL params
+  const isOverdueView = initialStatus === "overdue";
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            Master Task Manager
+            {isOverdueView ? "Overdue Tasks" : "Master Task Manager"}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Create, assign, and manage all tasks across projects
+            {isOverdueView
+              ? "Review overdue tasks and mark them as complete"
+              : "Create, assign, and manage all tasks across projects"}
           </p>
         </div>
         <Button size="sm" onClick={openCreate}>
@@ -177,7 +233,7 @@ export default function TasksPage() {
 
       {/* Filters */}
       <div className="mb-4">
-        <TaskFiltersBar filters={filters} onFiltersChange={setFilters} />
+        <TaskFiltersBar filters={filters} onFiltersChange={handleFiltersChange} />
       </div>
 
       {/* Task count */}
@@ -228,7 +284,7 @@ export default function TasksPage() {
                 <TableHead className="font-semibold text-right">
                   Budget
                 </TableHead>
-                <TableHead className="font-semibold w-20">Actions</TableHead>
+                <TableHead className="font-semibold w-28">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -307,7 +363,19 @@ export default function TasksPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1">
+                      {/* Quick "Mark Complete" button for non-complete tasks */}
+                      {task.status !== "complete" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleMarkComplete(task as EnrichedTask)}
+                          className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                          title="Mark as complete"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
