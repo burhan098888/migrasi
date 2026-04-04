@@ -36,7 +36,7 @@ import type { Id } from "@/convex/_generated/dataModel.d.ts";
 
 export default function DivisionsPage() {
   const { user: currentUser, isAdminOrManager } = useUserRole();
-  const divisions = useQuery(api.divisions.list);
+  const divisions = useQuery(api.divisions.list, {});
   const createDivision = useMutation(api.divisions.create);
   const updateDivision = useMutation(api.divisions.update);
   const removeDivision = useMutation(api.divisions.remove);

@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { MessageCircle } from "lucide-react";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 import { sendTaskToWhatsApp } from "../_lib/whatsapp.ts";
 
@@ -81,9 +82,10 @@ export default function TaskFormDialog({
   onOpenChange,
   editingTask,
 }: TaskFormDialogProps) {
-  const projects = useQuery(api.projects.list);
-  const divisions = useQuery(api.divisions.list);
-  const users = useQuery(api.users.listAll);
+  const { demoModeArg } = useDemoMode();
+  const projects = useQuery(api.projects.list, { demoMode: demoModeArg });
+  const divisions = useQuery(api.divisions.list, { demoMode: demoModeArg });
+  const users = useQuery(api.users.listAll, { demoMode: demoModeArg });
   const createTask = useMutation(api.tasks.create);
   const updateTask = useMutation(api.tasks.update);
 

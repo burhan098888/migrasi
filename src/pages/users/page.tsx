@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Shield, ShieldAlert, UserCheck } from "lucide-react";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 
 const ROLE_BADGE_MAP = {
@@ -33,7 +34,8 @@ const ROLE_BADGE_MAP = {
 
 export default function UsersPage() {
   const { user: currentUser, isAdmin } = useUserRole();
-  const users = useQuery(api.users.listAll);
+  const { demoModeArg } = useDemoMode();
+  const users = useQuery(api.users.listAll, { demoMode: demoModeArg });
   const updateRole = useMutation(api.users.updateRole);
   const navigate = useNavigate();
 

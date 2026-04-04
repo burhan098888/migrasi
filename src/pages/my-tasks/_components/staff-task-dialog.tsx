@@ -52,8 +52,8 @@ export default function StaffTaskDialog({
   open,
   onOpenChange,
 }: StaffTaskDialogProps) {
-  const projects = useQuery(api.projects.list);
-  const divisions = useQuery(api.divisions.list);
+  const projects = useQuery(api.projects.list, {});
+  const divisions = useQuery(api.divisions.list, {});
   const createMyTask = useMutation(api.tasks.createMyTask);
 
   const [form, setForm] = useState<StaffTaskFormData>(INITIAL_FORM);

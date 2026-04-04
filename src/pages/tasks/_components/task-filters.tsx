@@ -10,6 +10,8 @@ import {
 import { Button } from "@/components/ui/button.tsx";
 import { X } from "lucide-react";
 
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
+
 export type TaskFilters = {
   projectId: string;
   divisionId: string;
@@ -27,9 +29,10 @@ export default function TaskFiltersBar({
   filters,
   onFiltersChange,
 }: TaskFiltersBarProps) {
-  const projects = useQuery(api.projects.list);
-  const divisions = useQuery(api.divisions.list);
-  const users = useQuery(api.users.listAll);
+  const { demoModeArg } = useDemoMode();
+  const projects = useQuery(api.projects.list, { demoMode: demoModeArg });
+  const divisions = useQuery(api.divisions.list, { demoMode: demoModeArg });
+  const users = useQuery(api.users.listAll, { demoMode: demoModeArg });
 
   const hasFilters = Object.values(filters).some((v) => v !== "all");
 

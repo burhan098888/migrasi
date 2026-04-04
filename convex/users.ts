@@ -57,10 +57,10 @@ export const getCurrentUser = query({
 });
 
 export const listAll = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { demoMode: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    if (!identity && !args.demoMode) {
       throw new ConvexError({
         code: "UNAUTHENTICATED",
         message: "User not logged in",

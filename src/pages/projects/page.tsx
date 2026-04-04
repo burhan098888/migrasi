@@ -41,6 +41,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, FolderKanban } from "lucide-react";
 import { format } from "date-fns";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 
 type ProjectFormData = {
@@ -59,8 +60,9 @@ const INITIAL_FORM: ProjectFormData = {
 
 export default function ProjectsPage() {
   const { user: currentUser, isAdminOrManager } = useUserRole();
-  const projects = useQuery(api.projects.list);
-  const users = useQuery(api.users.listAll);
+  const { demoModeArg } = useDemoMode();
+  const projects = useQuery(api.projects.list, { demoMode: demoModeArg });
+  const users = useQuery(api.users.listAll, { demoMode: demoModeArg });
   const createProject = useMutation(api.projects.create);
   const updateProject = useMutation(api.projects.update);
   const removeProject = useMutation(api.projects.remove);

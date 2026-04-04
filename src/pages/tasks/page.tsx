@@ -80,7 +80,7 @@ export default function TasksPage() {
   const { user: currentUser, isAdminOrManager } = useUserRole();
   const { demoModeArg } = useDemoMode();
   const tasks = useQuery(api.tasks.list, { demoMode: demoModeArg });
-  const allUsers = useQuery(api.users.listAll);
+  const allUsers = useQuery(api.users.listAll, { demoMode: demoModeArg });
   const markOverdue = useMutation(api.tasks.markOverdueTasks);
   const updateTask = useMutation(api.tasks.update);
   const removeTask = useMutation(api.tasks.remove);
