@@ -60,7 +60,7 @@ const INITIAL_FORM: ProjectFormData = {
 
 export default function ProjectsPage() {
   const { user: currentUser, isAdminOrManager } = useUserRole();
-  const { demoModeArg } = useDemoMode();
+  const { demoModeArg, isDemoGuest } = useDemoMode();
   const projects = useQuery(api.projects.list, { demoMode: demoModeArg });
   const users = useQuery(api.users.listAll, { demoMode: demoModeArg });
   const createProject = useMutation(api.projects.create);
@@ -73,13 +73,13 @@ export default function ProjectsPage() {
   const [form, setForm] = useState<ProjectFormData>(INITIAL_FORM);
 
   useEffect(() => {
-    if (currentUser && !isAdminOrManager) {
+    if (currentUser && !isAdminOrManager && !isDemoGuest) {
       toast.error("Only admins and managers can manage projects");
       navigate("/dashboard");
     }
-  }, [currentUser, isAdminOrManager, navigate]);
+  }, [currentUser, isAdminOrManager, isDemoGuest, navigate]);
 
-  if (!projects || !users || !currentUser) {
+  if (!projects || !users || (!currentUser && !isDemoGuest)) {
     return (
       <div className="p-6 space-y-4">
         <Skeleton className="h-10 w-48" />
@@ -90,7 +90,7 @@ export default function ProjectsPage() {
     );
   }
 
-  if (!isAdminOrManager) return null;
+  if (!isAdminOrManager && !isDemoGuest) return null;
 
   const openCreate = () => {
     setForm(INITIAL_FORM);
@@ -159,13 +159,14 @@ export default function ProjectsPage() {
             Manage projects and track overall progress
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" onClick={openCreate}>
-              <Plus className="w-4 h-4 mr-1" />
-              New Project
-            </Button>
-          </DialogTrigger>
+        {!isDemoGuest && (
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" onClick={openCreate}>
+                <Plus className="w-4 h-4 mr-1" />
+                New Project
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
@@ -227,6 +228,7 @@ export default function ProjectsPage() {
             </div>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       {projects.length === 0 ? (
@@ -287,24 +289,26 @@ export default function ProjectsPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEdit(p)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(p._id)}
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
+                    {!isDemoGuest && (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEdit(p)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(p._id)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

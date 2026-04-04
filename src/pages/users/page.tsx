@@ -34,19 +34,19 @@ const ROLE_BADGE_MAP = {
 
 export default function UsersPage() {
   const { user: currentUser, isAdmin } = useUserRole();
-  const { demoModeArg } = useDemoMode();
+  const { demoModeArg, isDemoGuest } = useDemoMode();
   const users = useQuery(api.users.listAll, { demoMode: demoModeArg });
   const updateRole = useMutation(api.users.updateRole);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (currentUser && !isAdmin) {
+    if (currentUser && !isAdmin && !isDemoGuest) {
       toast.error("Only admins can manage users");
       navigate("/dashboard");
     }
-  }, [currentUser, isAdmin, navigate]);
+  }, [currentUser, isAdmin, isDemoGuest, navigate]);
 
-  if (!users || !currentUser) {
+  if (!users || (!currentUser && !isDemoGuest)) {
     return (
       <div className="p-6 space-y-4">
         <Skeleton className="h-10 w-48" />
@@ -57,7 +57,7 @@ export default function UsersPage() {
     );
   }
 
-  if (!isAdmin) return null;
+  if (!isAdmin && !isDemoGuest) return null;
 
   const handleRoleChange = async (userId: Id<"users">, newRole: "admin" | "manager" | "staff") => {
     try {
@@ -90,7 +90,7 @@ export default function UsersPage() {
           <TableBody>
             {users.map((u) => {
               const badge = ROLE_BADGE_MAP[u.role];
-              const isCurrentUser = u._id === currentUser._id;
+              const isCurrentUser = !isDemoGuest && currentUser && u._id === currentUser._id;
               return (
                 <TableRow key={u._id}>
                   <TableCell className="font-medium">
@@ -120,7 +120,9 @@ export default function UsersPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {isCurrentUser ? (
+                    {isDemoGuest ? (
+                      <span className="text-xs text-muted-foreground">View only</span>
+                    ) : isCurrentUser ? (
                       <span className="text-xs text-muted-foreground">
                         Cannot change own role
                       </span>

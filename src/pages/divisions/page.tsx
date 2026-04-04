@@ -32,11 +32,13 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, Building2 } from "lucide-react";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 
 export default function DivisionsPage() {
   const { user: currentUser, isAdminOrManager } = useUserRole();
-  const divisions = useQuery(api.divisions.list, {});
+  const { demoModeArg, isDemoGuest } = useDemoMode();
+  const divisions = useQuery(api.divisions.list, { demoMode: demoModeArg });
   const createDivision = useMutation(api.divisions.create);
   const updateDivision = useMutation(api.divisions.update);
   const removeDivision = useMutation(api.divisions.remove);
@@ -47,13 +49,13 @@ export default function DivisionsPage() {
   const [name, setName] = useState("");
 
   useEffect(() => {
-    if (currentUser && !isAdminOrManager) {
+    if (currentUser && !isAdminOrManager && !isDemoGuest) {
       toast.error("Only admins and managers can manage divisions");
       navigate("/dashboard");
     }
-  }, [currentUser, isAdminOrManager, navigate]);
+  }, [currentUser, isAdminOrManager, isDemoGuest, navigate]);
 
-  if (!divisions || !currentUser) {
+  if (!divisions || (!currentUser && !isDemoGuest)) {
     return (
       <div className="p-6 space-y-4">
         <Skeleton className="h-10 w-48" />
@@ -64,7 +66,7 @@ export default function DivisionsPage() {
     );
   }
 
-  if (!isAdminOrManager) return null;
+  if (!isAdminOrManager && !isDemoGuest) return null;
 
   const openCreate = () => {
     setName("");
@@ -117,35 +119,37 @@ export default function DivisionsPage() {
             Manage organizational divisions
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" onClick={openCreate}>
-              <Plus className="w-4 h-4 mr-1" />
-              New Division
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingId ? "Edit Division" : "New Division"}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-2">
-              <div>
-                <Label>Division Name</Label>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Engineering"
-                  onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                />
-              </div>
-              <Button onClick={handleSubmit} className="w-full">
-                {editingId ? "Update Division" : "Create Division"}
+        {!isDemoGuest && (
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" onClick={openCreate}>
+                <Plus className="w-4 h-4 mr-1" />
+                New Division
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {editingId ? "Edit Division" : "New Division"}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-2">
+                <div>
+                  <Label>Division Name</Label>
+                  <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Engineering"
+                    onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+                  />
+                </div>
+                <Button onClick={handleSubmit} className="w-full">
+                  {editingId ? "Update Division" : "Create Division"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {divisions.length === 0 ? (
@@ -159,12 +163,14 @@ export default function DivisionsPage() {
               Create divisions to organize tasks by department
             </EmptyDescription>
           </EmptyHeader>
-          <EmptyContent>
-            <Button size="sm" onClick={openCreate}>
-              <Plus className="w-4 h-4 mr-1" />
-              New Division
-            </Button>
-          </EmptyContent>
+          {!isDemoGuest && (
+            <EmptyContent>
+              <Button size="sm" onClick={openCreate}>
+                <Plus className="w-4 h-4 mr-1" />
+                New Division
+              </Button>
+            </EmptyContent>
+          )}
         </Empty>
       ) : (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -172,33 +178,37 @@ export default function DivisionsPage() {
             <TableHeader>
               <TableRow className="bg-muted/30">
                 <TableHead className="font-semibold">Division Name</TableHead>
-                <TableHead className="font-semibold w-24">Actions</TableHead>
+                {!isDemoGuest && (
+                  <TableHead className="font-semibold w-24">Actions</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
               {divisions.map((d) => (
                 <TableRow key={d._id}>
                   <TableCell className="font-medium">{d.name}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEdit(d)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(d._id)}
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                  {!isDemoGuest && (
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEdit(d)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(d._id)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

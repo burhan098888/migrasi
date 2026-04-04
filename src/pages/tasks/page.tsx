@@ -78,7 +78,7 @@ const VALID_STATUSES = ["all", "not_started", "in_progress", "complete", "overdu
 
 export default function TasksPage() {
   const { user: currentUser, isAdminOrManager } = useUserRole();
-  const { demoModeArg } = useDemoMode();
+  const { demoModeArg, isDemoGuest } = useDemoMode();
   const tasks = useQuery(api.tasks.list, { demoMode: demoModeArg });
   const allUsers = useQuery(api.users.listAll, { demoMode: demoModeArg });
   const markOverdue = useMutation(api.tasks.markOverdueTasks);
@@ -135,11 +135,11 @@ export default function TasksPage() {
   }, [currentUser, markOverdue]);
 
   useEffect(() => {
-    if (currentUser && !isAdminOrManager) {
+    if (currentUser && !isAdminOrManager && !isDemoGuest) {
       toast.error("Only admins and managers can access the task manager");
       navigate("/dashboard");
     }
-  }, [currentUser, isAdminOrManager, navigate]);
+  }, [currentUser, isAdminOrManager, isDemoGuest, navigate]);
 
   const filteredTasks = useMemo(() => {
     if (!tasks) return [];
@@ -174,7 +174,7 @@ export default function TasksPage() {
     }
   };
 
-  if (!tasks || !currentUser) {
+  if (!tasks || (!currentUser && !isDemoGuest)) {
     return (
       <div className="p-6 space-y-4">
         <Skeleton className="h-10 w-48" />
@@ -190,7 +190,7 @@ export default function TasksPage() {
     );
   }
 
-  if (!isAdminOrManager) return null;
+  if (!isAdminOrManager && !isDemoGuest) return null;
 
   const openCreate = () => {
     setEditingTask(null);
@@ -240,10 +240,12 @@ export default function TasksPage() {
               : "Create, assign, and manage all tasks across projects"}
           </p>
         </div>
-        <Button size="sm" onClick={openCreate}>
-          <Plus className="w-4 h-4 mr-1" />
-          New Task
-        </Button>
+        {!isDemoGuest && (
+          <Button size="sm" onClick={openCreate}>
+            <Plus className="w-4 h-4 mr-1" />
+            New Task
+          </Button>
+        )}
       </div>
 
       {/* Period selector */}
@@ -394,58 +396,62 @@ export default function TasksPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      {/* Send to WhatsApp */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          sendTaskToWhatsApp({
-                            title: task.title,
-                            projectName: task.projectName,
-                            divisionName: task.divisionName,
-                            assigneeName: task.assigneeName,
-                            priority: task.priority,
-                            deadline: format(new Date(task.deadline), "MMM d, yyyy"),
-                            status: task.status,
-                            progressPercentage: task.progressPercentage,
-                            budgetAllocated: task.budgetAllocated,
-                            budgetRealized: task.budgetRealized,
-                            notes: task.notes,
-                          })
-                        }
-                        className="h-7 w-7 p-0 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
-                        title="Send to WhatsApp"
-                      >
-                        <MessageCircle className="w-3.5 h-3.5" />
-                      </Button>
-                      {/* Quick "Mark Complete" button for non-complete tasks */}
-                      {task.status !== "complete" && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleMarkComplete(task as EnrichedTask)}
-                          className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                          title="Mark as complete"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                        </Button>
+                      {!isDemoGuest && (
+                        <>
+                          {/* Send to WhatsApp */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              sendTaskToWhatsApp({
+                                title: task.title,
+                                projectName: task.projectName,
+                                divisionName: task.divisionName,
+                                assigneeName: task.assigneeName,
+                                priority: task.priority,
+                                deadline: format(new Date(task.deadline), "MMM d, yyyy"),
+                                status: task.status,
+                                progressPercentage: task.progressPercentage,
+                                budgetAllocated: task.budgetAllocated,
+                                budgetRealized: task.budgetRealized,
+                                notes: task.notes,
+                              })
+                            }
+                            className="h-7 w-7 p-0 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                            title="Send to WhatsApp"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                          </Button>
+                          {/* Quick "Mark Complete" button for non-complete tasks */}
+                          {task.status !== "complete" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleMarkComplete(task as EnrichedTask)}
+                              className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                              title="Mark as complete"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEdit(task as EnrichedTask)}
+                            className="h-7 w-7 p-0"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(task._id)}
+                            className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEdit(task as EnrichedTask)}
-                        className="h-7 w-7 p-0"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(task._id)}
-                        className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
