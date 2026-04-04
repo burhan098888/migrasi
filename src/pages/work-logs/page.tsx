@@ -10,10 +10,12 @@ import {
 } from "@/components/ui/empty.tsx";
 import { FileText } from "lucide-react";
 import WorkLogTable from "./_components/work-log-table.tsx";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 
 export default function WorkLogsPage() {
-  const logs = useQuery(api.workLogs.list);
-  const summary = useQuery(api.workLogs.getSummary);
+  const { demoModeArg } = useDemoMode();
+  const logs = useQuery(api.workLogs.list, { demoMode: demoModeArg });
+  const summary = useQuery(api.workLogs.getSummary, { demoMode: demoModeArg });
 
   if (logs === undefined || summary === undefined) {
     return (

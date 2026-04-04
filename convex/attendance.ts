@@ -1,12 +1,13 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { getCurrentUser } from "./helpers.ts";
+import { getCurrentUser, filterDemo } from "./helpers.ts";
 
 /** Check in the current user with geolocation */
 export const checkIn = mutation({
   args: {
     lat: v.number(),
     lng: v.number(),
+    isDemo: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
@@ -42,6 +43,7 @@ export const checkIn = mutation({
       checkInLat: args.lat,
       checkInLng: args.lng,
       status: "checked_in",
+      isDemo: args.isDemo,
     });
   },
 });
@@ -107,7 +109,10 @@ export const getTodayStatus = query({
 
 /** Get all attendance records for a specific date (admin/manager view) */
 export const getByDate = query({
-  args: { date: v.string() },
+  args: {
+    date: v.string(),
+    demoMode: v.optional(v.boolean()),
+  },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -117,10 +122,12 @@ export const getByDate = query({
       });
     }
 
-    const records = await ctx.db
+    const allRecords = await ctx.db
       .query("attendance")
       .withIndex("by_date", (q) => q.eq("date", args.date))
       .collect();
+
+    const records = filterDemo(allRecords, args.demoMode);
 
     // Enrich with user data
     const enriched = await Promise.all(
@@ -143,11 +150,12 @@ export const getMyHistory = query({
   args: {
     startDate: v.string(),
     endDate: v.string(),
+    demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
 
-    const records = await ctx.db
+    const allRecords = await ctx.db
       .query("attendance")
       .withIndex("by_user_and_date", (q) =>
         q.eq("userId", user._id).gte("date", args.startDate).lte("date", args.endDate),
@@ -155,7 +163,7 @@ export const getMyHistory = query({
       .order("desc")
       .collect();
 
-    return records;
+    return filterDemo(allRecords, args.demoMode);
   },
 });
 
@@ -164,6 +172,7 @@ export const getStats = query({
   args: {
     startDate: v.string(),
     endDate: v.string(),
+    demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -175,12 +184,14 @@ export const getStats = query({
     }
 
     // Get all records in the date range
-    const records = await ctx.db
+    const allRecords = await ctx.db
       .query("attendance")
       .withIndex("by_date", (q) =>
         q.gte("date", args.startDate).lte("date", args.endDate),
       )
       .collect();
+
+    const records = filterDemo(allRecords, args.demoMode);
 
     const totalRecords = records.length;
     const completedRecords = records.filter((r) => r.status === "checked_out");

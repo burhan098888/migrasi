@@ -3,6 +3,7 @@ import { api } from "@/convex/_generated/api.js";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Users, Clock, CalendarCheck, Timer } from "lucide-react";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 
 function formatMinutes(minutes: number): string {
   const hours = Math.floor(minutes / 60);
@@ -20,7 +21,8 @@ export default function AttendanceStats({
   startDate,
   endDate,
 }: AttendanceStatsProps) {
-  const stats = useQuery(api.attendance.getStats, { startDate, endDate });
+  const { demoModeArg } = useDemoMode();
+  const stats = useQuery(api.attendance.getStats, { startDate, endDate, demoMode: demoModeArg });
 
   const isLoading = stats === undefined;
 

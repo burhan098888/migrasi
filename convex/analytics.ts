@@ -2,6 +2,7 @@ import { ConvexError } from "convex/values";
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel.d.ts";
+import { filterDemo } from "./helpers.ts";
 
 /**
  * Filter tasks by deadline within a period (inclusive).
@@ -22,7 +23,7 @@ const MONTH_SHORT = [
 ];
 
 /**
- * Compute report periods for trend data (25th–24th cycle).
+ * Compute report periods for trend data (25th-24th cycle).
  * Mirrors frontend report-period.ts logic.
  */
 function getReportPeriodsForTrend(count: number) {
@@ -68,6 +69,7 @@ export const getSummary = query({
   args: {
     periodStart: v.optional(v.string()),
     periodEnd: v.optional(v.string()),
+    demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -78,14 +80,15 @@ export const getSummary = query({
       });
     }
 
-    const [allTasks, projects, divisions, users] = await Promise.all([
+    const [rawTasks, projects, divisions, users] = await Promise.all([
       ctx.db.query("tasks").collect(),
       ctx.db.query("projects").collect(),
       ctx.db.query("divisions").collect(),
       ctx.db.query("users").collect(),
     ]);
 
-    // Filter tasks by period if provided
+    // Filter by demo mode then by period
+    const allTasks = filterDemo(rawTasks, args.demoMode);
     const tasks = filterByPeriod(allTasks, args.periodStart, args.periodEnd);
 
     // --- Task stats by status ---
@@ -200,6 +203,7 @@ export const getUserAnalytics = query({
   args: {
     periodStart: v.optional(v.string()),
     periodEnd: v.optional(v.string()),
+    demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -210,13 +214,14 @@ export const getUserAnalytics = query({
       });
     }
 
-    const [allTasks, projects, users] = await Promise.all([
+    const [rawTasks, projects, users] = await Promise.all([
       ctx.db.query("tasks").collect(),
       ctx.db.query("projects").collect(),
       ctx.db.query("users").collect(),
     ]);
 
-    // Filter tasks by period if provided
+    // Filter by demo mode then by period
+    const allTasks = filterDemo(rawTasks, args.demoMode);
     const tasks = filterByPeriod(allTasks, args.periodStart, args.periodEnd);
 
     const projectMap = new Map(projects.map((p) => [p._id as string, p.name]));
@@ -321,6 +326,7 @@ export const getLeaderboard = query({
   args: {
     periodStart: v.optional(v.string()),
     periodEnd: v.optional(v.string()),
+    demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -328,11 +334,12 @@ export const getLeaderboard = query({
       throw new ConvexError({ code: "UNAUTHENTICATED", message: "User not logged in" });
     }
 
-    const [allTasks, users] = await Promise.all([
+    const [rawTasks, users] = await Promise.all([
       ctx.db.query("tasks").collect(),
       ctx.db.query("users").collect(),
     ]);
 
+    const allTasks = filterDemo(rawTasks, args.demoMode);
     const tasks = filterByPeriod(allTasks, args.periodStart, args.periodEnd);
 
     const stats: Record<
@@ -425,14 +432,17 @@ export const getLeaderboard = query({
 // ────────────────────────────────────────────────
 
 export const getCompletionTrend = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    demoMode: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new ConvexError({ code: "UNAUTHENTICATED", message: "User not logged in" });
     }
 
-    const tasks = await ctx.db.query("tasks").collect();
+    const rawTasks = await ctx.db.query("tasks").collect();
+    const tasks = filterDemo(rawTasks, args.demoMode);
     const periods = getReportPeriodsForTrend(6);
 
     return periods.map((p) => {

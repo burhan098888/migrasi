@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/empty.tsx";
 import { CalendarDays, Clock, CheckCircle2, MapPin } from "lucide-react";
 import { format } from "date-fns";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 
 function formatDuration(checkIn: string, checkOut: string): string {
   const ms = new Date(checkOut).getTime() - new Date(checkIn).getTime();
@@ -27,7 +28,8 @@ type MyHistoryProps = {
 };
 
 export default function MyHistory({ startDate, endDate }: MyHistoryProps) {
-  const records = useQuery(api.attendance.getMyHistory, { startDate, endDate });
+  const { demoModeArg } = useDemoMode();
+  const records = useQuery(api.attendance.getMyHistory, { startDate, endDate, demoMode: demoModeArg });
 
   const isLoading = records === undefined;
 

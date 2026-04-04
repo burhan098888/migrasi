@@ -9,11 +9,13 @@ import { format, addMonths, subMonths, isSameDay } from "date-fns";
 import CalendarGrid from "./_components/calendar-grid.tsx";
 import DayDetailPanel from "./_components/day-detail-panel.tsx";
 import HolidayDialog from "./_components/holiday-dialog.tsx";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 
 export default function CalendarPage() {
   const { isAdminOrManager } = useUserRole();
-  const tasks = useQuery(api.tasks.list, {});
-  const holidays = useQuery(api.holidays.list, {});
+  const { demoModeArg } = useDemoMode();
+  const tasks = useQuery(api.tasks.list, { demoMode: demoModeArg });
+  const holidays = useQuery(api.holidays.list, { demoMode: demoModeArg });
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);

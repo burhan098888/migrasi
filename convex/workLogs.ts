@@ -1,29 +1,11 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
+import { filterDemo } from "./helpers.ts";
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError({
-        message: "User not logged in",
-        code: "UNAUTHENTICATED",
-      });
-    }
-    return await ctx.db
-      .query("workLogs")
-      .withIndex("by_date")
-      .order("desc")
-      .collect();
-  },
-});
-
-export const getByDateRange = query({
   args: {
-    startDate: v.string(),
-    endDate: v.string(),
+    demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -33,19 +15,22 @@ export const getByDateRange = query({
         code: "UNAUTHENTICATED",
       });
     }
-    return await ctx.db
+    const allLogs = await ctx.db
       .query("workLogs")
-      .withIndex("by_date", (q) =>
-        q.gte("date", args.startDate).lte("date", args.endDate),
-      )
+      .withIndex("by_date")
       .order("desc")
       .collect();
+    return filterDemo(allLogs, args.demoMode);
   },
 });
 
-export const getSummary = query({
-  args: {},
-  handler: async (ctx) => {
+export const getByDateRange = query({
+  args: {
+    startDate: v.string(),
+    endDate: v.string(),
+    demoMode: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new ConvexError({
@@ -53,7 +38,31 @@ export const getSummary = query({
         code: "UNAUTHENTICATED",
       });
     }
-    const allLogs = await ctx.db.query("workLogs").collect();
+    const allLogs = await ctx.db
+      .query("workLogs")
+      .withIndex("by_date", (q) =>
+        q.gte("date", args.startDate).lte("date", args.endDate),
+      )
+      .order("desc")
+      .collect();
+    return filterDemo(allLogs, args.demoMode);
+  },
+});
+
+export const getSummary = query({
+  args: {
+    demoMode: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        message: "User not logged in",
+        code: "UNAUTHENTICATED",
+      });
+    }
+    const rawLogs = await ctx.db.query("workLogs").collect();
+    const allLogs = filterDemo(rawLogs, args.demoMode);
 
     // Group by PIC name
     const byPic: Record<string, number> = {};
@@ -83,6 +92,7 @@ export const create = mutation({
     picName: v.string(),
     category: v.string(),
     description: v.string(),
+    isDemo: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -111,6 +121,7 @@ export const create = mutation({
       picName: args.picName,
       category: args.category,
       description: args.description,
+      isDemo: args.isDemo,
     });
   },
 });

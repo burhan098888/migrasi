@@ -1,11 +1,13 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { requireAdminOrManager, getCurrentUser } from "./helpers.ts";
+import { requireAdminOrManager, getCurrentUser, filterDemo } from "./helpers.ts";
 import { api } from "./_generated/api.js";
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    demoMode: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new ConvexError({
@@ -13,7 +15,8 @@ export const list = query({
         message: "User not logged in",
       });
     }
-    const tasks = await ctx.db.query("tasks").collect();
+    const allTasks = await ctx.db.query("tasks").collect();
+    const tasks = filterDemo(allTasks, args.demoMode);
     return await Promise.all(
       tasks.map(async (task) => {
         const assignee = await ctx.db.get(task.assigneeId);
@@ -33,13 +36,16 @@ export const list = query({
 });
 
 export const listByAssignee = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    demoMode: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
-    const tasks = await ctx.db
+    const allTasks = await ctx.db
       .query("tasks")
       .withIndex("by_assignee", (q) => q.eq("assigneeId", user._id))
       .collect();
+    const tasks = filterDemo(allTasks, args.demoMode);
     return await Promise.all(
       tasks.map(async (task) => {
         const project = await ctx.db.get(task.projectId);
@@ -78,10 +84,11 @@ export const create = mutation({
     ),
     progressPercentage: v.number(),
     notes: v.string(),
+    isDemo: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<void> => {
     await requireAdminOrManager(ctx);
-    const taskId = await ctx.db.insert("tasks", {
+    await ctx.db.insert("tasks", {
       title: args.title,
       projectId: args.projectId,
       divisionId: args.divisionId,
@@ -93,6 +100,7 @@ export const create = mutation({
       status: args.status,
       progressPercentage: args.progressPercentage,
       notes: args.notes,
+      isDemo: args.isDemo,
     });
     // Recalculate project progress
     await ctx.runMutation(api.projects.recalculateProgress, {
@@ -199,6 +207,7 @@ export const createMyTask = mutation({
     budgetAllocated: v.number(),
     budgetRealized: v.number(),
     notes: v.string(),
+    isDemo: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<void> => {
     const user = await getCurrentUser(ctx);
@@ -214,6 +223,7 @@ export const createMyTask = mutation({
       status: "not_started",
       progressPercentage: 0,
       notes: args.notes,
+      isDemo: args.isDemo,
     });
     // Recalculate project progress
     await ctx.runMutation(api.projects.recalculateProgress, {
@@ -246,7 +256,6 @@ export const markOverdueTasks = mutation({
     const now = new Date().toISOString();
     const tasks = await ctx.db.query("tasks").collect();
 
-    const projectsToRecalc = new Set<string>();
     for (const task of tasks) {
       if (
         task.deadline < now &&
@@ -255,7 +264,6 @@ export const markOverdueTasks = mutation({
         task.status !== "complete"
       ) {
         await ctx.db.patch(task._id, { status: "overdue" });
-        projectsToRecalc.add(task.projectId);
       }
     }
   },

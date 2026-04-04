@@ -10,6 +10,7 @@ import {
   EmptyDescription,
 } from "@/components/ui/empty.tsx";
 import { Trophy, Users } from "lucide-react";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 
 function formatMinutes(minutes: number): string {
   const hours = Math.floor(minutes / 60);
@@ -24,7 +25,8 @@ type TeamSummaryProps = {
 };
 
 export default function TeamSummary({ startDate, endDate }: TeamSummaryProps) {
-  const stats = useQuery(api.attendance.getStats, { startDate, endDate });
+  const { demoModeArg } = useDemoMode();
+  const stats = useQuery(api.attendance.getStats, { startDate, endDate, demoMode: demoModeArg });
 
   const isLoading = stats === undefined;
 

@@ -28,6 +28,7 @@ import { sendTaskToWhatsApp } from "./_lib/whatsapp.ts";
 import { formatRupiah } from "@/lib/currency.ts";
 import { getCurrentReportPeriod, type ReportPeriod } from "@/lib/report-period.ts";
 import { format } from "date-fns";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 import TaskFormDialog from "./_components/task-form-dialog.tsx";
 import TaskFiltersBar, {
   type TaskFilters,
@@ -77,7 +78,8 @@ const VALID_STATUSES = ["all", "not_started", "in_progress", "complete", "overdu
 
 export default function TasksPage() {
   const { user: currentUser, isAdminOrManager } = useUserRole();
-  const tasks = useQuery(api.tasks.list);
+  const { demoModeArg } = useDemoMode();
+  const tasks = useQuery(api.tasks.list, { demoMode: demoModeArg });
   const allUsers = useQuery(api.users.listAll);
   const markOverdue = useMutation(api.tasks.markOverdueTasks);
   const updateTask = useMutation(api.tasks.update);

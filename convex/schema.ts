@@ -49,6 +49,7 @@ export default defineSchema({
     ),
     progressPercentage: v.number(),
     notes: v.string(),
+    isDemo: v.optional(v.boolean()),
   })
     .index("by_project", ["projectId"])
     .index("by_assignee", ["assigneeId"])
@@ -58,6 +59,7 @@ export default defineSchema({
   holidays: defineTable({
     date: v.string(),
     eventName: v.string(),
+    isDemo: v.optional(v.boolean()),
   }),
 
   workLogs: defineTable({
@@ -65,6 +67,7 @@ export default defineSchema({
     picName: v.string(),
     category: v.string(),
     description: v.string(),
+    isDemo: v.optional(v.boolean()),
   })
     .index("by_date", ["date"])
     .index("by_picName", ["picName"])
@@ -80,6 +83,7 @@ export default defineSchema({
     checkOutLat: v.optional(v.number()),
     checkOutLng: v.optional(v.number()),
     status: v.union(v.literal("checked_in"), v.literal("checked_out")),
+    isDemo: v.optional(v.boolean()),
   })
     .index("by_user_and_date", ["userId", "date"])
     .index("by_date", ["date"]),

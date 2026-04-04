@@ -23,13 +23,15 @@ import { ClipboardList, CheckCircle2, Clock, AlertTriangle, Plus } from "lucide-
 import { Button } from "@/components/ui/button.tsx";
 import TaskCard from "./_components/task-card.tsx";
 import StaffTaskDialog from "./_components/staff-task-dialog.tsx";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 
 type StatusFilter = "all" | "not_started" | "in_progress" | "complete" | "overdue";
 type PriorityFilter = "all" | "low" | "medium" | "high";
 
 export default function MyTasksPage() {
   const { user } = useUserRole();
-  const tasks = useQuery(api.tasks.listByAssignee);
+  const { demoModeArg } = useDemoMode();
+  const tasks = useQuery(api.tasks.listByAssignee, { demoMode: demoModeArg });
   const markOverdue = useMutation(api.tasks.markOverdueTasks);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");

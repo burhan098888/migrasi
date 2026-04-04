@@ -34,6 +34,7 @@ import DivisionWorkloadChart from "./_components/division-workload-chart.tsx";
 import Leaderboard from "./_components/leaderboard.tsx";
 import CompletionTrendChart from "./_components/completion-trend-chart.tsx";
 import UserAnalyticsCards from "./_components/user-analytics-cards.tsx";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -47,6 +48,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 export default function AnalyticsPage() {
   const navigate = useNavigate();
   const [selectedUserId, setSelectedUserId] = useState("all");
+  const { demoModeArg } = useDemoMode();
 
   // Period state
   const [periodMode, setPeriodMode] = useState<"all" | "period">("all");
@@ -55,13 +57,13 @@ export default function AnalyticsPage() {
   // Build query args based on mode
   const periodArgs =
     periodMode === "period"
-      ? { periodStart: period.startDate, periodEnd: period.endDate }
-      : {};
+      ? { periodStart: period.startDate, periodEnd: period.endDate, demoMode: demoModeArg }
+      : { demoMode: demoModeArg };
 
   const analytics = useQuery(api.analytics.getSummary, periodArgs);
   const userAnalytics = useQuery(api.analytics.getUserAnalytics, periodArgs);
   const leaderboard = useQuery(api.analytics.getLeaderboard, periodArgs);
-  const completionTrend = useQuery(api.analytics.getCompletionTrend, {});
+  const completionTrend = useQuery(api.analytics.getCompletionTrend, { demoMode: demoModeArg });
 
   if (!analytics) {
     return (

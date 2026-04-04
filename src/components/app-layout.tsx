@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth.ts";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ import { toast } from "sonner";
 function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const { user, isAdminOrManager } = useUserRole();
   const { removeUser } = useAuth();
+  const { isDemoMode, toggleDemoMode } = useDemoMode();
 
   const navItems = [
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -112,6 +114,28 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           );
         })}
       </nav>
+
+      {/* Demo Mode Toggle */}
+      {isAdminOrManager && (
+        <div className={cn("px-3 py-2 border-t border-sidebar-border", collapsed && "px-2")}>
+          <button
+            onClick={toggleDemoMode}
+            className={cn(
+              "flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-all",
+              isDemoMode
+                ? "bg-amber-500/15 text-amber-500 ring-1 ring-amber-500/30"
+                : "text-sidebar-foreground/50 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground/70",
+              collapsed && "justify-center px-2",
+            )}
+          >
+            <div className={cn(
+              "w-2 h-2 rounded-full shrink-0",
+              isDemoMode ? "bg-amber-500 animate-pulse" : "bg-sidebar-foreground/30",
+            )} />
+            {!collapsed && (isDemoMode ? "Demo Mode ON" : "Demo Mode")}
+          </button>
+        </div>
+      )}
 
       {/* User info */}
       <div className="border-t border-sidebar-border px-3 py-4">

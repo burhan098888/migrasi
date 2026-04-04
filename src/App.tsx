@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { DefaultProviders } from "./components/providers/default.tsx";
+import { DemoModeProvider } from "@/hooks/use-demo-mode.tsx";
 import AuthCallback from "./pages/auth/Callback.tsx";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -21,6 +22,7 @@ export default function App() {
 
   return (
     <DefaultProviders>
+      <DemoModeProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
@@ -41,6 +43,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      </DemoModeProvider>
     </DefaultProviders>
   );
 }

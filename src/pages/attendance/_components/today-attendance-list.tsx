@@ -12,10 +12,12 @@ import {
 } from "@/components/ui/empty.tsx";
 import { Users, Clock, CheckCircle2, MapPin } from "lucide-react";
 import { format } from "date-fns";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 
 export default function TodayAttendanceList() {
+  const { demoModeArg } = useDemoMode();
   const todayDate = new Date().toISOString().split("T")[0];
-  const records = useQuery(api.attendance.getByDate, { date: todayDate });
+  const records = useQuery(api.attendance.getByDate, { date: todayDate, demoMode: demoModeArg });
 
   const isLoading = records === undefined;
 

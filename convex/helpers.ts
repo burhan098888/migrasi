@@ -50,3 +50,16 @@ export async function requireAdminOrManager(ctx: QueryCtx | MutationCtx) {
 export async function requireAdmin(ctx: QueryCtx | MutationCtx) {
   return requireRole(ctx, ["admin"]);
 }
+
+/**
+ * Filter records by demo mode.
+ * - demoMode true  → only demo records
+ * - demoMode false/undefined → only live records (isDemo !== true)
+ */
+export function filterDemo<T extends { isDemo?: boolean }>(
+  records: T[],
+  demoMode?: boolean,
+): T[] {
+  if (demoMode === true) return records.filter((r) => r.isDemo === true);
+  return records.filter((r) => r.isDemo !== true);
+}
