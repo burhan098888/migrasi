@@ -26,11 +26,13 @@ import { useEffect, useState, useMemo } from "react";
 import { Plus, Pencil, Trash2, ListTodo, CheckCircle2, MessageCircle } from "lucide-react";
 import { sendTaskToWhatsApp } from "./_lib/whatsapp.ts";
 import { formatRupiah } from "@/lib/currency.ts";
+import { getCurrentReportPeriod, type ReportPeriod } from "@/lib/report-period.ts";
 import { format } from "date-fns";
 import TaskFormDialog from "./_components/task-form-dialog.tsx";
 import TaskFiltersBar, {
   type TaskFilters,
 } from "./_components/task-filters.tsx";
+import PeriodSelector from "../analytics/_components/period-selector.tsx";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 
 const STATUS_STYLES = {
@@ -86,6 +88,10 @@ export default function TasksPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<EnrichedTask | null>(null);
 
+  // Period filter state (25th–24th monthly cycle)
+  const [periodMode, setPeriodMode] = useState<"all" | "period">("all");
+  const [period, setPeriod] = useState<ReportPeriod>(getCurrentReportPeriod);
+
   // Read initial filter values from URL query params
   const initialStatus = VALID_STATUSES.includes(searchParams.get("status") ?? "")
     ? (searchParams.get("status") as string)
@@ -136,6 +142,11 @@ export default function TasksPage() {
   const filteredTasks = useMemo(() => {
     if (!tasks) return [];
     return tasks.filter((t) => {
+      // Period filter: match tasks whose deadline falls within the selected cycle
+      if (periodMode === "period") {
+        if (t.deadline < period.startDate || t.deadline > period.endDate)
+          return false;
+      }
       if (filters.projectId !== "all" && t.projectId !== filters.projectId)
         return false;
       if (
@@ -150,7 +161,7 @@ export default function TasksPage() {
         return false;
       return true;
     });
-  }, [tasks, filters]);
+  }, [tasks, filters, periodMode, period]);
 
   // Clear URL params when filters change manually
   const handleFiltersChange = (newFilters: TaskFilters) => {
@@ -233,6 +244,16 @@ export default function TasksPage() {
         </Button>
       </div>
 
+      {/* Period selector */}
+      <div className="mb-4">
+        <PeriodSelector
+          mode={periodMode}
+          period={period}
+          onModeChange={setPeriodMode}
+          onPeriodChange={setPeriod}
+        />
+      </div>
+
       {/* Filters */}
       <div className="mb-4">
         <TaskFiltersBar filters={filters} onFiltersChange={handleFiltersChange} />
@@ -241,6 +262,11 @@ export default function TasksPage() {
       {/* Task count */}
       <div className="mb-3 text-xs text-muted-foreground">
         Showing {filteredTasks.length} of {tasks.length} tasks
+        {periodMode === "period" && (
+          <span className="ml-1 text-primary font-medium">
+            — {period.label} cycle (25th–24th)
+          </span>
+        )}
       </div>
 
       {/* Table */}
