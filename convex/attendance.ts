@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { getCurrentUser, filterDemo, resolveDemoMode } from "./helpers.ts";
+import { getCurrentUser, filterDemo, resolveDemoAccess } from "./helpers.ts";
 
 /** Check in the current user with geolocation */
 export const checkIn = mutation({
@@ -91,11 +91,28 @@ export const checkOut = mutation({
 
 /** Get the current user's attendance for today */
 export const getTodayStatus = query({
-  args: {},
-  handler: async (ctx) => {
-    const user = await getCurrentUser(ctx);
-    const todayDate = new Date().toISOString().split("T")[0];
+  args: {
+    demoMode: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
 
+    // Demo guests have no personal today status
+    if (!identity) {
+      if (args.demoMode === true) return null;
+      throw new ConvexError({ message: "User not logged in", code: "UNAUTHENTICATED" });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) return null;
+
+    const todayDate = new Date().toISOString().split("T")[0];
     const record = await ctx.db
       .query("attendance")
       .withIndex("by_user_and_date", (q) =>
@@ -114,20 +131,13 @@ export const getByDate = query({
     demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError({
-        message: "User not logged in",
-        code: "UNAUTHENTICATED",
-      });
-    }
+    const { effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
 
     const allRecords = await ctx.db
       .query("attendance")
       .withIndex("by_date", (q) => q.eq("date", args.date))
       .collect();
 
-    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
     const records = filterDemo(allRecords, effectiveDemoMode);
 
     // Enrich with user data
@@ -146,7 +156,7 @@ export const getByDate = query({
   },
 });
 
-/** Get the current user's attendance history */
+/** Get the current user's attendance history (or all demo records for guests) */
 export const getMyHistory = query({
   args: {
     startDate: v.string(),
@@ -154,16 +164,28 @@ export const getMyHistory = query({
     demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-    const effectiveDemoMode = user.role === "staff" ? true : args.demoMode;
+    const { isGuest, effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
 
-    const allRecords = await ctx.db
-      .query("attendance")
-      .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", user._id).gte("date", args.startDate).lte("date", args.endDate),
-      )
-      .order("desc")
-      .collect();
+    let allRecords;
+    if (isGuest) {
+      // Demo guest sees all demo attendance
+      allRecords = await ctx.db
+        .query("attendance")
+        .withIndex("by_date", (q) =>
+          q.gte("date", args.startDate).lte("date", args.endDate),
+        )
+        .order("desc")
+        .collect();
+    } else {
+      const user = await getCurrentUser(ctx);
+      allRecords = await ctx.db
+        .query("attendance")
+        .withIndex("by_user_and_date", (q) =>
+          q.eq("userId", user._id).gte("date", args.startDate).lte("date", args.endDate),
+        )
+        .order("desc")
+        .collect();
+    }
 
     return filterDemo(allRecords, effectiveDemoMode);
   },
@@ -177,13 +199,7 @@ export const getStats = query({
     demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError({
-        message: "User not logged in",
-        code: "UNAUTHENTICATED",
-      });
-    }
+    const { effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
 
     // Get all records in the date range
     const allRecords = await ctx.db
@@ -193,7 +209,6 @@ export const getStats = query({
       )
       .collect();
 
-    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
     const records = filterDemo(allRecords, effectiveDemoMode);
 
     const totalRecords = records.length;

@@ -1,5 +1,6 @@
 import { SignInButton } from "@/components/ui/signin.tsx";
 import { useAuth } from "@/hooks/use-auth.ts";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import {
@@ -13,6 +14,7 @@ import {
   CheckCircle2,
   Shield,
   Zap,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 
@@ -66,7 +68,13 @@ const benefits = [
 
 export default function Index() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { enterDemoMode } = useDemoMode();
   const navigate = useNavigate();
+
+  const handleTryDemo = () => {
+    enterDemoMode();
+    navigate("/dashboard");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -151,11 +159,22 @@ export default function Index() {
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             ) : (
-              <SignInButton
-                size="lg"
-                signInText="Start Tracking"
-                className="px-8"
-              />
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <SignInButton
+                  size="lg"
+                  signInText="Start Tracking"
+                  className="px-8"
+                />
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  onClick={handleTryDemo}
+                  className="px-8"
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Try Demo
+                </Button>
+              </div>
             )}
           </motion.div>
         </div>
@@ -305,11 +324,22 @@ export default function Index() {
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
-            <SignInButton
-              size="lg"
-              signInText="Get Started Free"
-              className="px-8"
-            />
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <SignInButton
+                size="lg"
+                signInText="Get Started Free"
+                className="px-8"
+              />
+              <Button
+                size="lg"
+                variant="secondary"
+                onClick={handleTryDemo}
+                className="px-8"
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                Try Demo
+              </Button>
+            </div>
           )}
         </div>
       </section>

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button.tsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 import {
   LogIn,
   LogOut,
@@ -13,6 +14,7 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
+  Eye,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -24,7 +26,8 @@ type GeoState =
   | { status: "error"; message: string };
 
 export default function CheckInOutCard() {
-  const todayStatus = useQuery(api.attendance.getTodayStatus);
+  const { isDemoGuest, demoModeArg } = useDemoMode();
+  const todayStatus = useQuery(api.attendance.getTodayStatus, { demoMode: demoModeArg });
   const checkIn = useMutation(api.attendance.checkIn);
   const checkOut = useMutation(api.attendance.checkOut);
   const [geoState, setGeoState] = useState<GeoState>({ status: "idle" });
@@ -122,6 +125,31 @@ export default function CheckInOutCard() {
   const hasCheckedIn = todayStatus !== null && todayStatus !== undefined;
   const isCheckedIn = hasCheckedIn && todayStatus.status === "checked_in";
   const isCheckedOut = hasCheckedIn && todayStatus.status === "checked_out";
+
+  // Demo guest view-only card
+  if (isDemoGuest) {
+    return (
+      <Card className="relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500" />
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5" />
+            Today{"'"}s Attendance
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center gap-3 py-8">
+            <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center">
+              <Eye className="w-8 h-8 text-amber-500" />
+            </div>
+            <p className="text-muted-foreground text-sm text-center">
+              Sign in to check in and track your attendance with geolocation
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="relative overflow-hidden">

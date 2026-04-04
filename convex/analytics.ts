@@ -2,7 +2,7 @@ import { ConvexError } from "convex/values";
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel.d.ts";
-import { filterDemo, resolveDemoMode } from "./helpers.ts";
+import { filterDemo, resolveDemoAccess } from "./helpers.ts";
 
 /**
  * Filter tasks by deadline within a period (inclusive).
@@ -72,13 +72,7 @@ export const getSummary = query({
     demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError({
-        code: "UNAUTHENTICATED",
-        message: "User not logged in",
-      });
-    }
+    const { effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
 
     const [rawTasks, projects, divisions, users] = await Promise.all([
       ctx.db.query("tasks").collect(),
@@ -87,8 +81,7 @@ export const getSummary = query({
       ctx.db.query("users").collect(),
     ]);
 
-    // Enforce role-based demo mode, then filter by period
-    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
+    // Filter by demo access, then by period
     const allTasks = filterDemo(rawTasks, effectiveDemoMode);
     const tasks = filterByPeriod(allTasks, args.periodStart, args.periodEnd);
 
@@ -207,13 +200,7 @@ export const getUserAnalytics = query({
     demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError({
-        code: "UNAUTHENTICATED",
-        message: "User not logged in",
-      });
-    }
+    const { effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
 
     const [rawTasks, projects, users] = await Promise.all([
       ctx.db.query("tasks").collect(),
@@ -221,8 +208,7 @@ export const getUserAnalytics = query({
       ctx.db.query("users").collect(),
     ]);
 
-    // Enforce role-based demo mode, then filter by period
-    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
+    // Filter by demo access, then by period
     const allTasks = filterDemo(rawTasks, effectiveDemoMode);
     const tasks = filterByPeriod(allTasks, args.periodStart, args.periodEnd);
 
@@ -331,17 +317,13 @@ export const getLeaderboard = query({
     demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError({ code: "UNAUTHENTICATED", message: "User not logged in" });
-    }
+    const { effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
 
     const [rawTasks, users] = await Promise.all([
       ctx.db.query("tasks").collect(),
       ctx.db.query("users").collect(),
     ]);
 
-    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
     const allTasks = filterDemo(rawTasks, effectiveDemoMode);
     const tasks = filterByPeriod(allTasks, args.periodStart, args.periodEnd);
 
@@ -439,13 +421,9 @@ export const getCompletionTrend = query({
     demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError({ code: "UNAUTHENTICATED", message: "User not logged in" });
-    }
+    const { effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
 
     const rawTasks = await ctx.db.query("tasks").collect();
-    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
     const tasks = filterDemo(rawTasks, effectiveDemoMode);
     const periods = getReportPeriodsForTrend(6);
 

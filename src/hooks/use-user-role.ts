@@ -1,11 +1,17 @@
 import { api } from "@/convex/_generated/api.js";
 import { useQuery } from "convex/react";
+import { useAuth } from "@/hooks/use-auth.ts";
 
 export function useUserRole() {
-  const user = useQuery(api.users.getCurrentUser);
+  const { user: authUser } = useAuth();
+  const isAuthenticated = !!authUser;
+
+  // Skip the backend query when not authenticated to avoid UNAUTHENTICATED errors
+  const user = useQuery(api.users.getCurrentUser, isAuthenticated ? {} : "skip");
 
   return {
     user,
+    isAuthenticated,
     isAdmin: user?.role === "admin",
     isManager: user?.role === "manager",
     isStaff: user?.role === "staff",

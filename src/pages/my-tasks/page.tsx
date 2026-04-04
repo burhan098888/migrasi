@@ -30,7 +30,7 @@ type PriorityFilter = "all" | "low" | "medium" | "high";
 
 export default function MyTasksPage() {
   const { user } = useUserRole();
-  const { demoModeArg } = useDemoMode();
+  const { demoModeArg, isDemoGuest } = useDemoMode();
   const tasks = useQuery(api.tasks.listByAssignee, { demoMode: demoModeArg });
   const markOverdue = useMutation(api.tasks.markOverdueTasks);
 
@@ -38,7 +38,7 @@ export default function MyTasksPage() {
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  // Mark overdue tasks on mount
+  // Mark overdue tasks on mount (only for authenticated users)
   useEffect(() => {
     if (user) {
       markOverdue({}).catch(() => {});
@@ -65,7 +65,7 @@ export default function MyTasksPage() {
     };
   }, [tasks]);
 
-  if (!user || tasks === undefined) {
+  if (!user && !isDemoGuest) {
     return (
       <div className="p-6 space-y-4">
         <Skeleton className="h-10 w-48" />
@@ -83,6 +83,19 @@ export default function MyTasksPage() {
     );
   }
 
+  if (tasks === undefined) {
+    return (
+      <div className="p-6 space-y-4">
+        <Skeleton className="h-10 w-48" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-20" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
@@ -90,13 +103,17 @@ export default function MyTasksPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">My Tasks</h1>
           <p className="text-muted-foreground mt-1">
-            Create your own tasks and track progress — admins approve status
+            {isDemoGuest
+              ? "Previewing all demo tasks"
+              : "Create your own tasks and track progress — admins approve status"}
           </p>
         </div>
-        <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="w-4 h-4 mr-1" />
-          New Task
-        </Button>
+        {!isDemoGuest && (
+          <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" />
+            New Task
+          </Button>
+        )}
       </div>
 
       {/* Stats cards */}

@@ -1,20 +1,13 @@
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { requireAdminOrManager, filterDemo, resolveDemoMode } from "./helpers.ts";
+import { requireAdminOrManager, filterDemo, resolveDemoAccess } from "./helpers.ts";
 
 export const list = query({
   args: {
     demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError({
-        code: "UNAUTHENTICATED",
-        message: "User not logged in",
-      });
-    }
-    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
+    const { effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
     const allHolidays = await ctx.db.query("holidays").collect();
     return filterDemo(allHolidays, effectiveDemoMode);
   },

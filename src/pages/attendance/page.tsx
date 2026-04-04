@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Authenticated, AuthLoading } from "convex/react";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
 import { useUserRole } from "@/hooks/use-user-role.ts";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 import { MapPin } from "lucide-react";
 import { format } from "date-fns";
 import CheckInOutCard from "./_components/check-in-out-card.tsx";
@@ -15,10 +15,14 @@ import DateRangePicker, {
 } from "./_components/date-range-picker.tsx";
 import type { DateRange } from "./_components/date-range-picker.tsx";
 
-function AttendanceContent() {
+export default function AttendancePage() {
   const { isAdminOrManager } = useUserRole();
+  const { isDemoGuest } = useDemoMode();
   const today = new Date();
   const [dateRange, setDateRange] = useState<DateRange>(getThisMonthRange());
+
+  // Demo guests see all tabs (showcase mode)
+  const showAdminTabs = isAdminOrManager || isDemoGuest;
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto">
@@ -38,7 +42,7 @@ function AttendanceContent() {
         <TabsList>
           <TabsTrigger value="today">Today</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
-          {isAdminOrManager && (
+          {showAdminTabs && (
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           )}
         </TabsList>
@@ -47,7 +51,7 @@ function AttendanceContent() {
         <TabsContent value="today" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <CheckInOutCard />
-            {isAdminOrManager && <TodayAttendanceList />}
+            {showAdminTabs && <TodayAttendanceList />}
           </div>
         </TabsContent>
 
@@ -60,8 +64,8 @@ function AttendanceContent() {
           />
         </TabsContent>
 
-        {/* Dashboard tab (admin/manager only) */}
-        {isAdminOrManager && (
+        {/* Dashboard tab */}
+        {showAdminTabs && (
           <TabsContent value="dashboard" className="space-y-6">
             <DateRangePicker range={dateRange} onRangeChange={setDateRange} />
             <AttendanceStats
@@ -76,25 +80,5 @@ function AttendanceContent() {
         )}
       </Tabs>
     </div>
-  );
-}
-
-export default function AttendancePage() {
-  return (
-    <>
-      <Authenticated>
-        <AttendanceContent />
-      </Authenticated>
-      <AuthLoading>
-        <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-10 w-80" />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Skeleton className="h-80 w-full" />
-            <Skeleton className="h-80 w-full" />
-          </div>
-        </div>
-      </AuthLoading>
-    </>
   );
 }

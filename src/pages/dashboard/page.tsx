@@ -1,4 +1,5 @@
 import { useUserRole } from "@/hooks/use-user-role.ts";
+import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import {
   LayoutDashboard,
@@ -13,9 +14,11 @@ import { toast } from "sonner";
 
 export default function DashboardPage() {
   const { user, isAdminOrManager } = useUserRole();
+  const { isDemoGuest } = useDemoMode();
   const navigate = useNavigate();
 
-  if (!user) {
+  // Show skeleton only when authenticated and user hasn't loaded yet
+  if (!user && !isDemoGuest) {
     return (
       <div className="p-6 space-y-4">
         <Skeleton className="h-10 w-64" />
@@ -28,12 +31,10 @@ export default function DashboardPage() {
     );
   }
 
-  const handleComingSoon = (label: string) => {
-    toast.info(`${label} is coming soon in a future milestone!`);
-  };
+  const showAdminLinks = isAdminOrManager || isDemoGuest;
 
   const quickLinks = [
-    ...(isAdminOrManager
+    ...(showAdminLinks
       ? [
           {
             icon: ListTodo,
@@ -80,13 +81,19 @@ export default function DashboardPage() {
       {/* Welcome header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-foreground">
-          Welcome back, {user.name ?? "User"}
+          {isDemoGuest ? "Welcome to Hashinah" : `Welcome back, ${user?.name ?? "User"}`}
         </h1>
         <p className="text-muted-foreground mt-1">
-          You are signed in as{" "}
-          <span className="font-medium capitalize text-foreground">
-            {user.role}
-          </span>
+          {isDemoGuest ? (
+            "You\u2019re previewing the app with demo data"
+          ) : (
+            <>
+              You are signed in as{" "}
+              <span className="font-medium capitalize text-foreground">
+                {user?.role}
+              </span>
+            </>
+          )}
         </p>
       </div>
 

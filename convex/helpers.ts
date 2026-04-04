@@ -65,26 +65,33 @@ export function filterDemo<T extends { isDemo?: boolean }>(
 }
 
 /**
- * Resolve the effective demo mode based on the current user's role.
- * Staff users are always forced into demo mode — they cannot access live data.
- * Admin/manager users use whatever mode was requested.
+ * Resolve demo-mode access based on authentication state.
+ *
+ * - Authenticated users → always live data (effectiveDemoMode = undefined).
+ * - Unauthenticated + demoMode=true → demo data only (effectiveDemoMode = true).
+ * - Unauthenticated without demoMode → throws UNAUTHENTICATED.
+ *
+ * This replaces both the auth check and demo-mode resolution in a single call.
  */
-export async function resolveDemoMode(
+export async function resolveDemoAccess(
   ctx: QueryCtx | MutationCtx,
   requestedDemoMode?: boolean,
-): Promise<boolean | undefined> {
+): Promise<{ isGuest: boolean; effectiveDemoMode: boolean | undefined }> {
   const identity = await ctx.auth.getUserIdentity();
-  if (!identity) return requestedDemoMode;
 
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_token", (q) =>
-      q.eq("tokenIdentifier", identity.tokenIdentifier),
-    )
-    .unique();
+  if (identity) {
+    // Authenticated user → always live data, never demo
+    return { isGuest: false, effectiveDemoMode: undefined };
+  }
 
-  // Staff users are always forced into demo mode
-  if (user?.role === "staff") return true;
+  if (requestedDemoMode === true) {
+    // Unauthenticated guest viewing demo → demo data only
+    return { isGuest: true, effectiveDemoMode: true };
+  }
 
-  return requestedDemoMode;
+  // Not authenticated and not in demo mode → error
+  throw new ConvexError({
+    message: "User not logged in",
+    code: "UNAUTHENTICATED",
+  });
 }

@@ -1,21 +1,14 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
-import { filterDemo, resolveDemoMode } from "./helpers.ts";
+import { filterDemo, resolveDemoAccess } from "./helpers.ts";
 
 export const list = query({
   args: {
     demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError({
-        message: "User not logged in",
-        code: "UNAUTHENTICATED",
-      });
-    }
-    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
+    const { effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
     const allLogs = await ctx.db
       .query("workLogs")
       .withIndex("by_date")
@@ -32,14 +25,7 @@ export const getByDateRange = query({
     demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError({
-        message: "User not logged in",
-        code: "UNAUTHENTICATED",
-      });
-    }
-    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
+    const { effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
     const allLogs = await ctx.db
       .query("workLogs")
       .withIndex("by_date", (q) =>
@@ -56,14 +42,7 @@ export const getSummary = query({
     demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError({
-        message: "User not logged in",
-        code: "UNAUTHENTICATED",
-      });
-    }
-    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
+    const { effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
     const rawLogs = await ctx.db.query("workLogs").collect();
     const allLogs = filterDemo(rawLogs, effectiveDemoMode);
 

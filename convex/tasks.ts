@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { requireAdminOrManager, getCurrentUser, filterDemo, resolveDemoMode } from "./helpers.ts";
+import { requireAdminOrManager, getCurrentUser, filterDemo, resolveDemoAccess } from "./helpers.ts";
 import { api } from "./_generated/api.js";
 
 export const list = query({
@@ -8,14 +8,7 @@ export const list = query({
     demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError({
-        code: "UNAUTHENTICATED",
-        message: "User not logged in",
-      });
-    }
-    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
+    const { effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
     const allTasks = await ctx.db.query("tasks").collect();
     const tasks = filterDemo(allTasks, effectiveDemoMode);
     return await Promise.all(
@@ -41,12 +34,20 @@ export const listByAssignee = query({
     demoMode: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-    const effectiveDemoMode = user.role === "staff" ? true : args.demoMode;
-    const allTasks = await ctx.db
-      .query("tasks")
-      .withIndex("by_assignee", (q) => q.eq("assigneeId", user._id))
-      .collect();
+    const { isGuest, effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
+
+    let allTasks;
+    if (isGuest) {
+      // Demo guest sees all demo tasks
+      allTasks = await ctx.db.query("tasks").collect();
+    } else {
+      const user = await getCurrentUser(ctx);
+      allTasks = await ctx.db
+        .query("tasks")
+        .withIndex("by_assignee", (q) => q.eq("assigneeId", user._id))
+        .collect();
+    }
+
     const tasks = filterDemo(allTasks, effectiveDemoMode);
     return await Promise.all(
       tasks.map(async (task) => {
