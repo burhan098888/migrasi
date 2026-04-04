@@ -90,6 +90,7 @@ export default function TaskFormDialog({
   const updateTask = useMutation(api.tasks.update);
 
   const [form, setForm] = useState<TaskFormData>(INITIAL_FORM);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (editingTask) {
@@ -109,11 +110,19 @@ export default function TaskFormDialog({
     } else {
       setForm(INITIAL_FORM);
     }
+    setSubmitted(false);
   }, [editingTask, open]);
 
   const handleSubmit = async () => {
-    if (!form.title || !form.projectId || !form.assigneeId || !form.deadline) {
-      toast.error("Please fill in all required fields");
+    setSubmitted(true);
+    const missingFields: string[] = [];
+    if (!form.title.trim()) missingFields.push("Task Title");
+    if (!form.projectId) missingFields.push("Project");
+    if (!form.assigneeId) missingFields.push("Assignee (PIC)");
+    if (!form.deadline) missingFields.push("Deadline");
+
+    if (missingFields.length > 0) {
+      toast.error(`Missing required fields: ${missingFields.join(", ")}`);
       return;
     }
     try {
@@ -183,6 +192,10 @@ export default function TaskFormDialog({
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  // Helper for field error styling
+  const fieldError = (value: string) =>
+    submitted && !value ? "border-destructive ring-destructive/20 ring-2" : "";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -201,6 +214,7 @@ export default function TaskFormDialog({
               value={form.title}
               onChange={(e) => updateField("title", e.target.value)}
               placeholder="Design homepage mockup"
+              className={fieldError(form.title.trim())}
             />
           </div>
 
@@ -211,10 +225,10 @@ export default function TaskFormDialog({
                 Project <span className="text-destructive">*</span>
               </Label>
               <Select
-                value={form.projectId}
+                value={form.projectId || undefined}
                 onValueChange={(val) => updateField("projectId", val)}
               >
-                <SelectTrigger>
+                <SelectTrigger className={fieldError(form.projectId)}>
                   <SelectValue placeholder="Select project" />
                 </SelectTrigger>
                 <SelectContent>
@@ -256,10 +270,10 @@ export default function TaskFormDialog({
                 Assignee (PIC) <span className="text-destructive">*</span>
               </Label>
               <Select
-                value={form.assigneeId}
+                value={form.assigneeId || undefined}
                 onValueChange={(val) => updateField("assigneeId", val)}
               >
-                <SelectTrigger>
+                <SelectTrigger className={fieldError(form.assigneeId)}>
                   <SelectValue placeholder="Select person" />
                 </SelectTrigger>
                 <SelectContent>
@@ -301,6 +315,7 @@ export default function TaskFormDialog({
                 type="date"
                 value={form.deadline}
                 onChange={(e) => updateField("deadline", e.target.value)}
+                className={fieldError(form.deadline)}
               />
             </div>
             <div>
