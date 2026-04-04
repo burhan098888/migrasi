@@ -149,26 +149,6 @@ export const getSummary = query({
       ([name, count]) => ({ name, tasks: count }),
     );
 
-    // --- Top performers (users with most complete tasks) ---
-    const userCompleteCount: Record<string, number> = {};
-    for (const t of tasks) {
-      if (t.status === "complete") {
-        const key = t.assigneeId as string;
-        userCompleteCount[key] = (userCompleteCount[key] ?? 0) + 1;
-      }
-    }
-    const topPerformers = Object.entries(userCompleteCount)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-      .map(([userId, completed]) => {
-        const u = users.find((usr) => (usr._id as string) === userId);
-        return {
-          name: u?.name ?? "Unknown",
-          completed,
-          total: tasks.filter((t) => (t.assigneeId as string) === userId).length,
-        };
-      });
-
     // --- High level KPIs ---
     const totalBudgetAllocated = tasks.reduce((s, t) => s + t.budgetAllocated, 0);
     const totalBudgetRealized = tasks.reduce((s, t) => s + t.budgetRealized, 0);
@@ -212,7 +192,6 @@ export const getSummary = query({
       projectProgress,
       budgetData,
       divisionWorkload,
-      topPerformers,
     };
   },
 });

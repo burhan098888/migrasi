@@ -240,8 +240,8 @@ export default function AnalyticsPage() {
               <SelectItem value="all">All Users</SelectItem>
               {userAnalytics
                 ?.filter((u) => u.name)
-                .map((u) => (
-                  <SelectItem key={u.name} value={u.name}>
+                .map((u, idx) => (
+                  <SelectItem key={`${u.name}-${idx}`} value={u.name}>
                     {u.name}
                   </SelectItem>
                 ))}

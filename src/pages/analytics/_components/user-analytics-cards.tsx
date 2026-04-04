@@ -37,9 +37,9 @@ export default function UserAnalyticsCards({ data, onViewOverdue }: UserAnalytic
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {data.map((user) => (
+      {data.map((user, idx) => (
         <div
-          key={user.name}
+          key={`${user.name}-${idx}`}
           className="bg-card border border-border rounded-xl p-5 space-y-4"
         >
           {/* User header */}
