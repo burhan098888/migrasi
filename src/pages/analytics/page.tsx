@@ -189,11 +189,13 @@ export default function AnalyticsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Users</SelectItem>
-              {userAnalytics?.map((u) => (
-                <SelectItem key={u.name} value={u.name}>
-                  {u.name}
-                </SelectItem>
-              ))}
+              {userAnalytics
+                ?.filter((u) => u.name)
+                .map((u) => (
+                  <SelectItem key={u.name} value={u.name}>
+                    {u.name}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
