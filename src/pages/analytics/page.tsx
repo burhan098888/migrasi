@@ -17,6 +17,8 @@ import {
   Banknote,
   Users,
   Gauge,
+  Clock,
+  Flame,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -29,7 +31,8 @@ import PriorityBarChart from "./_components/priority-bar-chart.tsx";
 import ProjectProgressChart from "./_components/project-progress-chart.tsx";
 import BudgetChart from "./_components/budget-chart.tsx";
 import DivisionWorkloadChart from "./_components/division-workload-chart.tsx";
-import TopPerformersTable from "./_components/top-performers-table.tsx";
+import Leaderboard from "./_components/leaderboard.tsx";
+import CompletionTrendChart from "./_components/completion-trend-chart.tsx";
 import UserAnalyticsCards from "./_components/user-analytics-cards.tsx";
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -57,13 +60,15 @@ export default function AnalyticsPage() {
 
   const analytics = useQuery(api.analytics.getSummary, periodArgs);
   const userAnalytics = useQuery(api.analytics.getUserAnalytics, periodArgs);
+  const leaderboard = useQuery(api.analytics.getLeaderboard, periodArgs);
+  const completionTrend = useQuery(api.analytics.getCompletionTrend, {});
 
   if (!analytics) {
     return (
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         <Skeleton className="h-10 w-56" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 10 }).map((_, i) => (
             <Skeleton key={i} className="h-24" />
           ))}
         </div>
@@ -111,8 +116,8 @@ export default function AnalyticsPage() {
         />
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Cards – 5 columns on large screens */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <KpiCard icon={FolderKanban} title="Projects" value={kpis.totalProjects} />
         <KpiCard icon={ListTodo} title="Total Tasks" value={kpis.totalTasks} />
         <KpiCard
@@ -120,6 +125,12 @@ export default function AnalyticsPage() {
           title="Completion Rate"
           value={`${kpis.completionRate}%`}
           accent="success"
+        />
+        <KpiCard
+          icon={Clock}
+          title="On-Time Delivery"
+          value={`${kpis.onTimeDeliveryRate}%`}
+          accent={kpis.onTimeDeliveryRate >= 80 ? "success" : "warning"}
         />
         <KpiCard
           icon={AlertTriangle}
@@ -139,6 +150,12 @@ export default function AnalyticsPage() {
         />
         <KpiCard icon={Users} title="Team Members" value={kpis.totalUsers} />
         <KpiCard
+          icon={Flame}
+          title="High Priority"
+          value={kpis.highPriorityCount}
+          accent={kpis.highPriorityCount > 0 ? "warning" : "default"}
+        />
+        <KpiCard
           icon={Banknote}
           title="Budget Allocated"
           value={formatRupiahCompact(kpis.totalBudgetAllocated)}
@@ -155,6 +172,24 @@ export default function AnalyticsPage() {
           }
           accent="success"
         />
+      </div>
+
+      {/* Leaderboard + Completion Trend */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ChartCard title="Team Leaderboard">
+          {leaderboard ? (
+            <Leaderboard data={leaderboard} />
+          ) : (
+            <Skeleton className="h-80" />
+          )}
+        </ChartCard>
+        <ChartCard title="Completion Trend (Last 6 Months)">
+          {completionTrend ? (
+            <CompletionTrendChart data={completionTrend} />
+          ) : (
+            <Skeleton className="h-80" />
+          )}
+        </ChartCard>
       </div>
 
       {/* Charts row 1 */}
@@ -177,15 +212,10 @@ export default function AnalyticsPage() {
         </ChartCard>
       </div>
 
-      {/* Budget & performers */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ChartCard title="Budget: Allocated vs Realized">
-          <BudgetChart data={analytics.budgetData} />
-        </ChartCard>
-        <ChartCard title="Top Performers">
-          <TopPerformersTable data={analytics.topPerformers} />
-        </ChartCard>
-      </div>
+      {/* Budget */}
+      <ChartCard title="Budget: Allocated vs Realized">
+        <BudgetChart data={analytics.budgetData} />
+      </ChartCard>
 
       {/* User Analytics with filter */}
       <div>

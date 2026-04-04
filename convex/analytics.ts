@@ -16,6 +16,54 @@ function filterByPeriod(
   return tasks.filter((t) => t.deadline >= periodStart && t.deadline <= periodEnd);
 }
 
+const MONTH_SHORT = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+/**
+ * Compute report periods for trend data (25th–24th cycle).
+ * Mirrors frontend report-period.ts logic.
+ */
+function getReportPeriodsForTrend(count: number) {
+  const now = new Date();
+  let month = now.getMonth() + 1;
+  let year = now.getFullYear();
+
+  if (now.getDate() >= 25) {
+    month++;
+    if (month > 12) { month = 1; year++; }
+  }
+
+  const periods: Array<{
+    label: string;
+    shortLabel: string;
+    startDate: string;
+    endDate: string;
+  }> = [];
+
+  for (let i = 0; i < count; i++) {
+    let startMonth = month - 1;
+    let startYear = year;
+    if (startMonth < 1) { startMonth = 12; startYear--; }
+
+    const startDate = new Date(Date.UTC(startYear, startMonth - 1, 25, 0, 0, 0, 0));
+    const endDate = new Date(Date.UTC(year, month - 1, 24, 23, 59, 59, 999));
+
+    periods.unshift({
+      label: `${MONTH_SHORT[month - 1]} ${year}`,
+      shortLabel: MONTH_SHORT[month - 1],
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    });
+
+    month--;
+    if (month < 1) { month = 12; year--; }
+  }
+
+  return periods;
+}
+
 export const getSummary = query({
   args: {
     periodStart: v.optional(v.string()),
@@ -133,6 +181,19 @@ export const getSummary = query({
         ? Math.round(tasks.reduce((s, t) => s + t.progressPercentage, 0) / tasks.length)
         : 0;
 
+    // On-time delivery rate: completed / (completed + overdue)
+    const onTimeDeliveryRate =
+      (statusCounts.complete + statusCounts.overdue) > 0
+        ? Math.round(
+            (statusCounts.complete / (statusCounts.complete + statusCounts.overdue)) * 100,
+          )
+        : 100;
+
+    // High priority count
+    const highPriorityCount = tasks.filter(
+      (t) => t.priority === "high" && t.status !== "complete",
+    ).length;
+
     return {
       kpis: {
         totalProjects: projects.length,
@@ -143,6 +204,8 @@ export const getSummary = query({
         totalBudgetAllocated,
         totalBudgetRealized,
         totalUsers: users.length,
+        onTimeDeliveryRate,
+        highPriorityCount,
       },
       tasksByStatus,
       tasksByPriority,
@@ -268,5 +331,143 @@ export const getUserAnalytics = query({
       .sort((a, b) => b.totalTasks - a.totalTasks);
 
     return userAnalytics;
+  },
+});
+
+// ────────────────────────────────────────────────
+// Leaderboard with composite scoring
+// ────────────────────────────────────────────────
+
+export const getLeaderboard = query({
+  args: {
+    periodStart: v.optional(v.string()),
+    periodEnd: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({ code: "UNAUTHENTICATED", message: "User not logged in" });
+    }
+
+    const [allTasks, users] = await Promise.all([
+      ctx.db.query("tasks").collect(),
+      ctx.db.query("users").collect(),
+    ]);
+
+    const tasks = filterByPeriod(allTasks, args.periodStart, args.periodEnd);
+
+    const stats: Record<
+      string,
+      {
+        name: string;
+        role: string;
+        totalTasks: number;
+        completed: number;
+        overdue: number;
+        inProgress: number;
+        notStarted: number;
+        progressSum: number;
+      }
+    > = {};
+
+    for (const u of users) {
+      const uid = u._id as string;
+      stats[uid] = {
+        name: u.name ?? "Unknown",
+        role: u.role,
+        totalTasks: 0,
+        completed: 0,
+        overdue: 0,
+        inProgress: 0,
+        notStarted: 0,
+        progressSum: 0,
+      };
+    }
+
+    for (const t of tasks) {
+      const uid = t.assigneeId as string;
+      const stat = stats[uid];
+      if (!stat) continue;
+      stat.totalTasks++;
+      stat.progressSum += t.progressPercentage;
+      if (t.status === "complete") stat.completed++;
+      else if (t.status === "overdue") stat.overdue++;
+      else if (t.status === "in_progress") stat.inProgress++;
+      else stat.notStarted++;
+    }
+
+    // Normalize completed count against the team maximum
+    const maxCompleted = Math.max(
+      ...Object.values(stats).map((s) => s.completed),
+      1,
+    );
+
+    const ranked = Object.values(stats)
+      .filter((s) => s.totalTasks > 0)
+      .map((s) => {
+        const completionRate =
+          s.totalTasks > 0 ? (s.completed / s.totalTasks) * 100 : 0;
+        const overdueRate =
+          s.totalTasks > 0 ? (s.overdue / s.totalTasks) * 100 : 0;
+        const avgProgress =
+          s.totalTasks > 0 ? Math.round(s.progressSum / s.totalTasks) : 0;
+
+        // Composite score (0-100):
+        //   40% completion rate  +  35% normalized volume  +  25% low-overdue bonus
+        const score = Math.min(
+          100,
+          Math.round(
+            completionRate * 0.4 +
+              (s.completed / maxCompleted) * 100 * 0.35 +
+              (100 - overdueRate) * 0.25,
+          ),
+        );
+
+        return {
+          name: s.name,
+          role: s.role,
+          score,
+          totalTasks: s.totalTasks,
+          completed: s.completed,
+          overdue: s.overdue,
+          inProgress: s.inProgress,
+          completionRate: Math.round(completionRate),
+          avgProgress,
+        };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    return ranked.map((r, i) => ({ ...r, rank: i + 1 }));
+  },
+});
+
+// ────────────────────────────────────────────────
+// Task completion trend over the last 6 report periods
+// ────────────────────────────────────────────────
+
+export const getCompletionTrend = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({ code: "UNAUTHENTICATED", message: "User not logged in" });
+    }
+
+    const tasks = await ctx.db.query("tasks").collect();
+    const periods = getReportPeriodsForTrend(6);
+
+    return periods.map((p) => {
+      const periodTasks = tasks.filter(
+        (t) => t.deadline >= p.startDate && t.deadline <= p.endDate,
+      );
+      return {
+        label: p.shortLabel,
+        fullLabel: p.label,
+        total: periodTasks.length,
+        completed: periodTasks.filter((t) => t.status === "complete").length,
+        overdue: periodTasks.filter((t) => t.status === "overdue").length,
+        inProgress: periodTasks.filter((t) => t.status === "in_progress").length,
+      };
+    });
   },
 });
