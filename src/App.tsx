@@ -13,6 +13,7 @@ import MyTasksPage from "./pages/my-tasks/page.tsx";
 import AnalyticsPage from "./pages/analytics/page.tsx";
 import CalendarPage from "./pages/calendar/page.tsx";
 import WorkLogsPage from "./pages/work-logs/page.tsx";
+import AttendancePage from "./pages/attendance/page.tsx";
 import { useServiceWorker } from "@/hooks/use-service-worker.ts";
 
 export default function App() {
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/work-logs" element={<WorkLogsPage />} />
+            <Route path="/attendance" element={<AttendancePage />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

@@ -69,4 +69,18 @@ export default defineSchema({
     .index("by_date", ["date"])
     .index("by_picName", ["picName"])
     .index("by_category", ["category"]),
+
+  attendance: defineTable({
+    userId: v.id("users"),
+    date: v.string(),
+    checkInTime: v.string(),
+    checkOutTime: v.optional(v.string()),
+    checkInLat: v.number(),
+    checkInLng: v.number(),
+    checkOutLat: v.optional(v.number()),
+    checkOutLng: v.optional(v.number()),
+    status: v.union(v.literal("checked_in"), v.literal("checked_out")),
+  })
+    .index("by_user_and_date", ["userId", "date"])
+    .index("by_date", ["date"]),
 });
