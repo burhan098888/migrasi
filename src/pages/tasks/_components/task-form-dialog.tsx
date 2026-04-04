@@ -20,8 +20,9 @@ import { Textarea } from "@/components/ui/textarea.tsx";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { MessageCircle } from "lucide-react";
+import { ConvexError } from "convex/values";
 import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
+import { useAuth } from "@/hooks/use-auth.ts";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 import { sendTaskToWhatsApp } from "../_lib/whatsapp.ts";
 
@@ -83,6 +84,7 @@ export default function TaskFormDialog({
   editingTask,
 }: TaskFormDialogProps) {
   const { demoModeArg } = useDemoMode();
+  const { user: authUser } = useAuth();
   const projects = useQuery(api.projects.list, { demoMode: demoModeArg });
   const divisions = useQuery(api.divisions.list, { demoMode: demoModeArg });
   const users = useQuery(api.users.listAll, { demoMode: demoModeArg });
@@ -114,6 +116,12 @@ export default function TaskFormDialog({
   }, [editingTask, open]);
 
   const handleSubmit = async () => {
+    // Auth guard: must be signed in to create/update tasks
+    if (!authUser) {
+      toast.error("Please sign in to create or edit tasks");
+      return;
+    }
+
     setSubmitted(true);
     const missingFields: string[] = [];
     if (!form.title.trim()) missingFields.push("Task Title");
@@ -180,8 +188,17 @@ export default function TaskFormDialog({
         });
       }
       onOpenChange(false);
-    } catch {
-      toast.error("Failed to save task");
+    } catch (error) {
+      if (error instanceof ConvexError) {
+        const data = error.data as { code: string; message: string };
+        if (data.code === "UNAUTHENTICATED") {
+          toast.error("Your session has expired. Please sign in again.");
+        } else {
+          toast.error(data.message || "Failed to save task");
+        }
+      } else {
+        toast.error("Failed to save task. Please try again.");
+      }
     }
   };
 
