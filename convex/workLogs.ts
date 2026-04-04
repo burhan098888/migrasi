@@ -1,7 +1,7 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
-import { filterDemo } from "./helpers.ts";
+import { filterDemo, resolveDemoMode } from "./helpers.ts";
 
 export const list = query({
   args: {
@@ -15,12 +15,13 @@ export const list = query({
         code: "UNAUTHENTICATED",
       });
     }
+    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
     const allLogs = await ctx.db
       .query("workLogs")
       .withIndex("by_date")
       .order("desc")
       .collect();
-    return filterDemo(allLogs, args.demoMode);
+    return filterDemo(allLogs, effectiveDemoMode);
   },
 });
 
@@ -38,6 +39,7 @@ export const getByDateRange = query({
         code: "UNAUTHENTICATED",
       });
     }
+    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
     const allLogs = await ctx.db
       .query("workLogs")
       .withIndex("by_date", (q) =>
@@ -45,7 +47,7 @@ export const getByDateRange = query({
       )
       .order("desc")
       .collect();
-    return filterDemo(allLogs, args.demoMode);
+    return filterDemo(allLogs, effectiveDemoMode);
   },
 });
 
@@ -61,8 +63,9 @@ export const getSummary = query({
         code: "UNAUTHENTICATED",
       });
     }
+    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
     const rawLogs = await ctx.db.query("workLogs").collect();
-    const allLogs = filterDemo(rawLogs, args.demoMode);
+    const allLogs = filterDemo(rawLogs, effectiveDemoMode);
 
     // Group by PIC name
     const byPic: Record<string, number> = {};

@@ -115,8 +115,8 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
         })}
       </nav>
 
-      {/* Demo Mode Toggle */}
-      {isAdminOrManager && (
+      {/* Demo Mode Toggle (admin/manager) or Demo Indicator (staff) */}
+      {isAdminOrManager ? (
         <div className={cn("px-3 py-2 border-t border-sidebar-border", collapsed && "px-2")}>
           <button
             onClick={toggleDemoMode}
@@ -134,6 +134,18 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
             )} />
             {!collapsed && (isDemoMode ? "Demo Mode ON" : "Demo Mode")}
           </button>
+        </div>
+      ) : (
+        <div className={cn("px-3 py-2 border-t border-sidebar-border", collapsed && "px-2")}>
+          <div
+            className={cn(
+              "flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium bg-amber-500/15 text-amber-500 ring-1 ring-amber-500/30",
+              collapsed && "justify-center px-2",
+            )}
+          >
+            <div className="w-2 h-2 rounded-full shrink-0 bg-amber-500 animate-pulse" />
+            {!collapsed && "Demo Data"}
+          </div>
         </div>
       )}
 

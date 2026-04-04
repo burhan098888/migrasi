@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { requireAdminOrManager, filterDemo } from "./helpers.ts";
+import { requireAdminOrManager, filterDemo, resolveDemoMode } from "./helpers.ts";
 
 export const list = query({
   args: {
@@ -14,8 +14,9 @@ export const list = query({
         message: "User not logged in",
       });
     }
+    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
     const allHolidays = await ctx.db.query("holidays").collect();
-    return filterDemo(allHolidays, args.demoMode);
+    return filterDemo(allHolidays, effectiveDemoMode);
   },
 });
 

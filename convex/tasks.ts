@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { requireAdminOrManager, getCurrentUser, filterDemo } from "./helpers.ts";
+import { requireAdminOrManager, getCurrentUser, filterDemo, resolveDemoMode } from "./helpers.ts";
 import { api } from "./_generated/api.js";
 
 export const list = query({
@@ -15,8 +15,9 @@ export const list = query({
         message: "User not logged in",
       });
     }
+    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
     const allTasks = await ctx.db.query("tasks").collect();
-    const tasks = filterDemo(allTasks, args.demoMode);
+    const tasks = filterDemo(allTasks, effectiveDemoMode);
     return await Promise.all(
       tasks.map(async (task) => {
         const assignee = await ctx.db.get(task.assigneeId);
@@ -41,11 +42,12 @@ export const listByAssignee = query({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
+    const effectiveDemoMode = user.role === "staff" ? true : args.demoMode;
     const allTasks = await ctx.db
       .query("tasks")
       .withIndex("by_assignee", (q) => q.eq("assigneeId", user._id))
       .collect();
-    const tasks = filterDemo(allTasks, args.demoMode);
+    const tasks = filterDemo(allTasks, effectiveDemoMode);
     return await Promise.all(
       tasks.map(async (task) => {
         const project = await ctx.db.get(task.projectId);

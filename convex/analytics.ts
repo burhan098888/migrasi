@@ -2,7 +2,7 @@ import { ConvexError } from "convex/values";
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel.d.ts";
-import { filterDemo } from "./helpers.ts";
+import { filterDemo, resolveDemoMode } from "./helpers.ts";
 
 /**
  * Filter tasks by deadline within a period (inclusive).
@@ -87,8 +87,9 @@ export const getSummary = query({
       ctx.db.query("users").collect(),
     ]);
 
-    // Filter by demo mode then by period
-    const allTasks = filterDemo(rawTasks, args.demoMode);
+    // Enforce role-based demo mode, then filter by period
+    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
+    const allTasks = filterDemo(rawTasks, effectiveDemoMode);
     const tasks = filterByPeriod(allTasks, args.periodStart, args.periodEnd);
 
     // --- Task stats by status ---
@@ -220,8 +221,9 @@ export const getUserAnalytics = query({
       ctx.db.query("users").collect(),
     ]);
 
-    // Filter by demo mode then by period
-    const allTasks = filterDemo(rawTasks, args.demoMode);
+    // Enforce role-based demo mode, then filter by period
+    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
+    const allTasks = filterDemo(rawTasks, effectiveDemoMode);
     const tasks = filterByPeriod(allTasks, args.periodStart, args.periodEnd);
 
     const projectMap = new Map(projects.map((p) => [p._id as string, p.name]));
@@ -339,7 +341,8 @@ export const getLeaderboard = query({
       ctx.db.query("users").collect(),
     ]);
 
-    const allTasks = filterDemo(rawTasks, args.demoMode);
+    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
+    const allTasks = filterDemo(rawTasks, effectiveDemoMode);
     const tasks = filterByPeriod(allTasks, args.periodStart, args.periodEnd);
 
     const stats: Record<
@@ -442,7 +445,8 @@ export const getCompletionTrend = query({
     }
 
     const rawTasks = await ctx.db.query("tasks").collect();
-    const tasks = filterDemo(rawTasks, args.demoMode);
+    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
+    const tasks = filterDemo(rawTasks, effectiveDemoMode);
     const periods = getReportPeriodsForTrend(6);
 
     return periods.map((p) => {

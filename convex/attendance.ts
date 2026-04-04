@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { getCurrentUser, filterDemo } from "./helpers.ts";
+import { getCurrentUser, filterDemo, resolveDemoMode } from "./helpers.ts";
 
 /** Check in the current user with geolocation */
 export const checkIn = mutation({
@@ -127,7 +127,8 @@ export const getByDate = query({
       .withIndex("by_date", (q) => q.eq("date", args.date))
       .collect();
 
-    const records = filterDemo(allRecords, args.demoMode);
+    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
+    const records = filterDemo(allRecords, effectiveDemoMode);
 
     // Enrich with user data
     const enriched = await Promise.all(
@@ -154,6 +155,7 @@ export const getMyHistory = query({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
+    const effectiveDemoMode = user.role === "staff" ? true : args.demoMode;
 
     const allRecords = await ctx.db
       .query("attendance")
@@ -163,7 +165,7 @@ export const getMyHistory = query({
       .order("desc")
       .collect();
 
-    return filterDemo(allRecords, args.demoMode);
+    return filterDemo(allRecords, effectiveDemoMode);
   },
 });
 
@@ -191,7 +193,8 @@ export const getStats = query({
       )
       .collect();
 
-    const records = filterDemo(allRecords, args.demoMode);
+    const effectiveDemoMode = await resolveDemoMode(ctx, args.demoMode);
+    const records = filterDemo(allRecords, effectiveDemoMode);
 
     const totalRecords = records.length;
     const completedRecords = records.filter((r) => r.status === "checked_out");
