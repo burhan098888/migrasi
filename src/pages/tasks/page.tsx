@@ -25,6 +25,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { Plus, Pencil, Trash2, ListTodo, CheckCircle2, MessageCircle } from "lucide-react";
 import { sendTaskToWhatsApp } from "./_lib/whatsapp.ts";
+import { formatRupiah } from "@/lib/currency.ts";
 import { format } from "date-fns";
 import TaskFormDialog from "./_components/task-form-dialog.tsx";
 import TaskFiltersBar, {
@@ -354,11 +355,11 @@ export default function TasksPage() {
                   <TableCell className="text-right">
                     <div className="text-xs">
                       <span className="text-muted-foreground">
-                        ${task.budgetAllocated.toLocaleString()}
+                        {formatRupiah(task.budgetAllocated)}
                       </span>
                       {task.budgetRealized > 0 && (
                         <span className="block text-foreground font-medium">
-                          ${task.budgetRealized.toLocaleString()} used
+                          {formatRupiah(task.budgetRealized)} used
                         </span>
                       )}
                     </div>

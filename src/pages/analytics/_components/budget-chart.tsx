@@ -8,14 +8,9 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
+import { formatRupiah, formatRupiahCompact } from "@/lib/currency.ts";
 
 type DataItem = { name: string; allocated: number; realized: number };
-
-function formatCurrency(v: number): string {
-  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `$${(v / 1_000).toFixed(1)}K`;
-  return `$${v}`;
-}
 
 export default function BudgetChart({ data }: { data: DataItem[] }) {
   if (data.length === 0) {
@@ -40,10 +35,10 @@ export default function BudgetChart({ data }: { data: DataItem[] }) {
           tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
           axisLine={false}
           tickLine={false}
-          tickFormatter={formatCurrency}
+          tickFormatter={formatRupiahCompact}
         />
         <Tooltip
-          formatter={(value: number, name: string) => [formatCurrency(value), name]}
+          formatter={(value: number, name: string) => [formatRupiah(value), name]}
           contentStyle={{
             backgroundColor: "var(--color-card)",
             border: "1px solid var(--color-border)",

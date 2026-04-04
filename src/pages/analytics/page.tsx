@@ -14,12 +14,13 @@ import {
   CheckCircle2,
   AlertTriangle,
   TrendingUp,
-  DollarSign,
+  Banknote,
   Users,
   Gauge,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { formatRupiahCompact } from "@/lib/currency.ts";
 import KpiCard from "./_components/kpi-card.tsx";
 import StatusPieChart from "./_components/status-pie-chart.tsx";
 import PriorityBarChart from "./_components/priority-bar-chart.tsx";
@@ -38,11 +39,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
-function formatCurrency(v: number): string {
-  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `$${(v / 1_000).toFixed(1)}K`;
-  return `$${v.toLocaleString()}`;
-}
+
 
 export default function AnalyticsPage() {
   const analytics = useQuery(api.analytics.getSummary, {});
@@ -120,15 +117,15 @@ export default function AnalyticsPage() {
         />
         <KpiCard icon={Users} title="Team Members" value={kpis.totalUsers} />
         <KpiCard
-          icon={DollarSign}
+          icon={Banknote}
           title="Budget Allocated"
-          value={formatCurrency(kpis.totalBudgetAllocated)}
+          value={formatRupiahCompact(kpis.totalBudgetAllocated)}
           accent="warning"
         />
         <KpiCard
           icon={TrendingUp}
           title="Budget Realized"
-          value={formatCurrency(kpis.totalBudgetRealized)}
+          value={formatRupiahCompact(kpis.totalBudgetRealized)}
           subtitle={
             kpis.totalBudgetAllocated > 0
               ? `${Math.round((kpis.totalBudgetRealized / kpis.totalBudgetAllocated) * 100)}% utilization`

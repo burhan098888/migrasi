@@ -22,6 +22,13 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 /**
+ * Format Rupiah inline for WhatsApp messages (plain text, no Intl)
+ */
+function formatRp(value: number): string {
+  return `Rp ${value.toLocaleString("id-ID")}`;
+}
+
+/**
  * Build a formatted WhatsApp message from task details
  */
 function buildTaskMessage(task: TaskMessageData): string {
@@ -37,9 +44,9 @@ function buildTaskMessage(task: TaskMessageData): string {
     `*Deadline:* ${task.deadline}`,
     `*Status:* ${statusLabel}`,
     `*Progress:* ${task.progressPercentage}%`,
-    `*Budget Allocated:* $${task.budgetAllocated.toLocaleString()}`,
+    `*Budget Allocated:* ${formatRp(task.budgetAllocated)}`,
     task.budgetRealized > 0
-      ? `*Budget Realized:* $${task.budgetRealized.toLocaleString()}`
+      ? `*Budget Realized:* ${formatRp(task.budgetRealized)}`
       : null,
     task.notes ? `\n*Notes:* ${task.notes}` : null,
   ];
