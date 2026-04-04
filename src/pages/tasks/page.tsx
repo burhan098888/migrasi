@@ -23,7 +23,8 @@ import {
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
-import { Plus, Pencil, Trash2, ListTodo, CheckCircle2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ListTodo, CheckCircle2, MessageCircle } from "lucide-react";
+import { sendTaskToWhatsApp } from "./_lib/whatsapp.ts";
 import { format } from "date-fns";
 import TaskFormDialog from "./_components/task-form-dialog.tsx";
 import TaskFiltersBar, {
@@ -364,6 +365,30 @@ export default function TasksPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
+                      {/* Send to WhatsApp */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          sendTaskToWhatsApp({
+                            title: task.title,
+                            projectName: task.projectName,
+                            divisionName: task.divisionName,
+                            assigneeName: task.assigneeName,
+                            priority: task.priority,
+                            deadline: format(new Date(task.deadline), "MMM d, yyyy"),
+                            status: task.status,
+                            progressPercentage: task.progressPercentage,
+                            budgetAllocated: task.budgetAllocated,
+                            budgetRealized: task.budgetRealized,
+                            notes: task.notes,
+                          })
+                        }
+                        className="h-7 w-7 p-0 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                        title="Send to WhatsApp"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                      </Button>
                       {/* Quick "Mark Complete" button for non-complete tasks */}
                       {task.status !== "complete" && (
                         <Button

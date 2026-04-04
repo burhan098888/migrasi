@@ -19,7 +19,10 @@ import { Label } from "@/components/ui/label.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { MessageCircle } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
+import { sendTaskToWhatsApp } from "../_lib/whatsapp.ts";
 
 type TaskFormData = {
   title: string;
@@ -133,7 +136,37 @@ export default function TaskFormDialog({
         toast.success("Task updated");
       } else {
         await createTask(payload);
-        toast.success("Task created");
+
+        // Resolve names for the WhatsApp message
+        const projectName =
+          projects?.find((p) => p._id === form.projectId)?.name ?? "Unknown";
+        const assigneeName =
+          users?.find((u) => u._id === form.assigneeId)?.name ?? "Unknown";
+        const divisionName = form.divisionId
+          ? (divisions?.find((d) => d._id === form.divisionId)?.name ?? null)
+          : null;
+
+        toast.success("Task created", {
+          description: "Send the task details to WhatsApp?",
+          action: {
+            label: "Send to WhatsApp",
+            onClick: () =>
+              sendTaskToWhatsApp({
+                title: form.title,
+                projectName,
+                divisionName,
+                assigneeName,
+                priority: form.priority,
+                deadline: format(new Date(form.deadline), "MMM d, yyyy"),
+                status: form.status,
+                progressPercentage: parseInt(form.progressPercentage) || 0,
+                budgetAllocated: parseFloat(form.budgetAllocated) || 0,
+                budgetRealized: parseFloat(form.budgetRealized) || 0,
+                notes: form.notes,
+              }),
+          },
+          duration: 8000,
+        });
       }
       onOpenChange(false);
     } catch {
