@@ -1,10 +1,27 @@
 import { ConvexError } from "convex/values";
 import { v } from "convex/values";
 import { query } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel.d.ts";
+
+/**
+ * Filter tasks by deadline within a period (inclusive).
+ * If no period args, returns all tasks.
+ */
+function filterByPeriod(
+  tasks: Doc<"tasks">[],
+  periodStart?: string,
+  periodEnd?: string,
+): Doc<"tasks">[] {
+  if (!periodStart || !periodEnd) return tasks;
+  return tasks.filter((t) => t.deadline >= periodStart && t.deadline <= periodEnd);
+}
 
 export const getSummary = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    periodStart: v.optional(v.string()),
+    periodEnd: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new ConvexError({
@@ -13,12 +30,15 @@ export const getSummary = query({
       });
     }
 
-    const [tasks, projects, divisions, users] = await Promise.all([
+    const [allTasks, projects, divisions, users] = await Promise.all([
       ctx.db.query("tasks").collect(),
       ctx.db.query("projects").collect(),
       ctx.db.query("divisions").collect(),
       ctx.db.query("users").collect(),
     ]);
+
+    // Filter tasks by period if provided
+    const tasks = filterByPeriod(allTasks, args.periodStart, args.periodEnd);
 
     // --- Task stats by status ---
     const statusCounts = { not_started: 0, in_progress: 0, complete: 0, overdue: 0 };
@@ -135,8 +155,11 @@ export const getSummary = query({
 });
 
 export const getUserAnalytics = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    periodStart: v.optional(v.string()),
+    periodEnd: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new ConvexError({
@@ -145,11 +168,14 @@ export const getUserAnalytics = query({
       });
     }
 
-    const [tasks, projects, users] = await Promise.all([
+    const [allTasks, projects, users] = await Promise.all([
       ctx.db.query("tasks").collect(),
       ctx.db.query("projects").collect(),
       ctx.db.query("users").collect(),
     ]);
+
+    // Filter tasks by period if provided
+    const tasks = filterByPeriod(allTasks, args.periodStart, args.periodEnd);
 
     const projectMap = new Map(projects.map((p) => [p._id as string, p.name]));
 

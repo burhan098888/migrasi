@@ -21,6 +21,8 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { formatRupiahCompact } from "@/lib/currency.ts";
+import { getCurrentReportPeriod, type ReportPeriod } from "@/lib/report-period.ts";
+import PeriodSelector from "./_components/period-selector.tsx";
 import KpiCard from "./_components/kpi-card.tsx";
 import StatusPieChart from "./_components/status-pie-chart.tsx";
 import PriorityBarChart from "./_components/priority-bar-chart.tsx";
@@ -39,14 +41,22 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
-
-
 export default function AnalyticsPage() {
-  const analytics = useQuery(api.analytics.getSummary, {});
-  const userAnalytics = useQuery(api.analytics.getUserAnalytics, {});
-  const allUsers = useQuery(api.users.listAll);
   const navigate = useNavigate();
   const [selectedUserId, setSelectedUserId] = useState("all");
+
+  // Period state
+  const [periodMode, setPeriodMode] = useState<"all" | "period">("all");
+  const [period, setPeriod] = useState<ReportPeriod>(getCurrentReportPeriod);
+
+  // Build query args based on mode
+  const periodArgs =
+    periodMode === "period"
+      ? { periodStart: period.startDate, periodEnd: period.endDate }
+      : {};
+
+  const analytics = useQuery(api.analytics.getSummary, periodArgs);
+  const userAnalytics = useQuery(api.analytics.getUserAnalytics, periodArgs);
 
   if (!analytics) {
     return (
@@ -82,11 +92,23 @@ export default function AnalyticsPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Analytics</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Overview of projects, tasks, budgets, and team performance
-        </p>
+      <div className="flex flex-col gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Analytics</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {periodMode === "period"
+              ? `Monthly report for ${period.label} (25th–24th cycle)`
+              : "All-time overview of projects, tasks, budgets, and team performance"}
+          </p>
+        </div>
+
+        {/* Period selector */}
+        <PeriodSelector
+          mode={periodMode}
+          period={period}
+          onModeChange={setPeriodMode}
+          onPeriodChange={setPeriod}
+        />
       </div>
 
       {/* KPI Cards */}
