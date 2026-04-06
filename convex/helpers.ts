@@ -29,7 +29,7 @@ export async function getCurrentUser(ctx: QueryCtx | MutationCtx) {
 
 export async function requireRole(
   ctx: QueryCtx | MutationCtx,
-  allowedRoles: Array<"admin" | "manager" | "staff">,
+  allowedRoles: Array<"admin" | "manager" | "staff" | "pkl">,
 ) {
   const user = await getCurrentUser(ctx);
 

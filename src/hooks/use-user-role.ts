@@ -15,8 +15,9 @@ export function useUserRole() {
     isAdmin: user?.role === "admin",
     isManager: user?.role === "manager",
     isStaff: user?.role === "staff",
+    isPkl: user?.role === "pkl",
     isAdminOrManager: user?.role === "admin" || user?.role === "manager",
-    hasRole: (roles: Array<"admin" | "manager" | "staff">) => {
+    hasRole: (roles: Array<"admin" | "manager" | "staff" | "pkl">) => {
       return user ? roles.includes(user.role) : false;
     },
   };

@@ -421,6 +421,7 @@ export const getComprehensiveKPI = query({
     periodStart: v.optional(v.string()),
     periodEnd: v.optional(v.string()),
     demoMode: v.optional(v.boolean()),
+    filterRole: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
@@ -475,7 +476,11 @@ export const getComprehensiveKPI = query({
     }
 
     // ── Per-user calculations ──
-    const userKPIs = users.map((user) => {
+    const filteredUsers = args.filterRole
+      ? users.filter((u) => u.role === args.filterRole)
+      : users;
+
+    const userKPIs = filteredUsers.map((user) => {
       const uid = user._id;
 
       // Task metrics

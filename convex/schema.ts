@@ -10,6 +10,7 @@ export default defineSchema({
       v.literal("admin"),
       v.literal("manager"),
       v.literal("staff"),
+      v.literal("pkl"),
     ),
     divisionId: v.optional(v.id("divisions")),
   })

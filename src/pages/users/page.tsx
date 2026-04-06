@@ -22,7 +22,7 @@ import {
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { Shield, ShieldAlert, UserCheck } from "lucide-react";
+import { Shield, ShieldAlert, UserCheck, GraduationCap } from "lucide-react";
 import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 
@@ -30,6 +30,7 @@ const ROLE_BADGE_MAP = {
   admin: { label: "Admin", className: "bg-primary/10 text-primary border-primary/20" },
   manager: { label: "Manager", className: "bg-accent/20 text-accent-foreground border-accent/30" },
   staff: { label: "Staff", className: "bg-muted text-muted-foreground border-border" },
+  pkl: { label: "PKL (Intern)", className: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 border-teal-200 dark:border-teal-800" },
 } as const;
 
 export default function UsersPage() {
@@ -59,7 +60,7 @@ export default function UsersPage() {
 
   if (!isAdmin && !isDemoGuest) return null;
 
-  const handleRoleChange = async (userId: Id<"users">, newRole: "admin" | "manager" | "staff") => {
+  const handleRoleChange = async (userId: Id<"users">, newRole: "admin" | "manager" | "staff" | "pkl") => {
     try {
       await updateRole({ userId, role: newRole });
       toast.success("Role updated successfully");
@@ -116,6 +117,7 @@ export default function UsersPage() {
                       {u.role === "admin" && <Shield className="w-3 h-3 mr-1" />}
                       {u.role === "manager" && <ShieldAlert className="w-3 h-3 mr-1" />}
                       {u.role === "staff" && <UserCheck className="w-3 h-3 mr-1" />}
+                      {u.role === "pkl" && <GraduationCap className="w-3 h-3 mr-1" />}
                       {badge.label}
                     </Badge>
                   </TableCell>
@@ -130,7 +132,7 @@ export default function UsersPage() {
                       <Select
                         value={u.role}
                         onValueChange={(value) =>
-                          handleRoleChange(u._id, value as "admin" | "manager" | "staff")
+                          handleRoleChange(u._id, value as "admin" | "manager" | "staff" | "pkl")
                         }
                       >
                         <SelectTrigger className="w-32 h-8 text-xs">
@@ -140,6 +142,7 @@ export default function UsersPage() {
                           <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="manager">Manager</SelectItem>
                           <SelectItem value="staff">Staff</SelectItem>
+                          <SelectItem value="pkl">PKL (Intern)</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
