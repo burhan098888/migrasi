@@ -19,7 +19,10 @@ import { Label } from "@/components/ui/label.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
+import { sendTaskToWhatsApp } from "@/lib/whatsapp.ts";
+import { useAuth } from "@/hooks/use-auth.ts";
 
 type StaffTaskFormData = {
   title: string;
@@ -55,6 +58,7 @@ export default function StaffTaskDialog({
   const projects = useQuery(api.projects.list, {});
   const divisions = useQuery(api.divisions.list, {});
   const createMyTask = useMutation(api.tasks.createMyTask);
+  const { user: authUser } = useAuth();
 
   const [form, setForm] = useState<StaffTaskFormData>(INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
@@ -84,7 +88,36 @@ export default function StaffTaskDialog({
         budgetRealized: parseFloat(form.budgetRealized) || 0,
         notes: form.notes,
       });
-      toast.success("Task created — waiting for approval");
+
+      // Resolve names for the WhatsApp message
+      const projectName =
+        projects?.find((p) => p._id === form.projectId)?.name ?? "Unknown";
+      const divisionName = form.divisionId
+        ? (divisions?.find((d) => d._id === form.divisionId)?.name ?? null)
+        : null;
+      const assigneeName = authUser?.profile.name ?? "Staff";
+
+      toast.success("Task created", {
+        description: "Notify admin via WhatsApp?",
+        action: {
+          label: "Send to WhatsApp",
+          onClick: () =>
+            sendTaskToWhatsApp({
+              title: form.title,
+              projectName,
+              divisionName,
+              assigneeName,
+              priority: form.priority,
+              deadline: format(new Date(form.deadline), "MMM d, yyyy"),
+              status: "not_started",
+              progressPercentage: 0,
+              budgetAllocated: parseFloat(form.budgetAllocated) || 0,
+              budgetRealized: parseFloat(form.budgetRealized) || 0,
+              notes: form.notes,
+            }),
+        },
+        duration: 8000,
+      });
       onOpenChange(false);
     } catch {
       toast.error("Failed to create task");

@@ -24,7 +24,7 @@ import { ConvexError } from "convex/values";
 import { useDemoMode } from "@/hooks/use-demo-mode.tsx";
 import { useAuth } from "@/hooks/use-auth.ts";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
-import { sendTaskToWhatsApp } from "../_lib/whatsapp.ts";
+import { sendTaskToWhatsApp } from "@/lib/whatsapp.ts";
 
 type TaskFormData = {
   title: string;

@@ -20,10 +20,12 @@ import {
   Save,
   ChevronDown,
   ChevronUp,
+  MessageCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 import { useUserRole } from "@/hooks/use-user-role.ts";
+import { sendTaskToWhatsApp } from "@/lib/whatsapp.ts";
 
 const STATUS_STYLES = {
   not_started: "bg-muted text-muted-foreground",
@@ -72,7 +74,7 @@ type TaskCardProps = {
 export default function TaskCard({ task }: TaskCardProps) {
   const updateMyTask = useMutation(api.tasks.updateMyTask);
   const updateTask = useMutation(api.tasks.update);
-  const { isAdminOrManager } = useUserRole();
+  const { isAdminOrManager, user: currentUser } = useUserRole();
   const [expanded, setExpanded] = useState(false);
   const [progress, setProgress] = useState(task.progressPercentage);
   const [status, setStatus] = useState(task.status);
@@ -298,16 +300,42 @@ export default function TaskCard({ task }: TaskCardProps) {
               />
             </div>
 
-            {/* Save button */}
-            <Button
-              onClick={handleSave}
-              disabled={!hasChanges || saving}
-              className="w-full mt-4"
-              size="sm"
-            >
-              <Save className="w-4 h-4 mr-1.5" />
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
+            {/* Action buttons */}
+            <div className="flex gap-2 mt-4">
+              <Button
+                onClick={handleSave}
+                disabled={!hasChanges || saving}
+                className="flex-1"
+                size="sm"
+              >
+                <Save className="w-4 h-4 mr-1.5" />
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() =>
+                  sendTaskToWhatsApp({
+                    title: task.title,
+                    projectName: task.projectName,
+                    divisionName: task.divisionName,
+                    assigneeName: currentUser?.name ?? "Staff",
+                    priority: task.priority,
+                    deadline: format(new Date(task.deadline), "MMM d, yyyy"),
+                    status: task.status,
+                    progressPercentage: task.progressPercentage,
+                    budgetAllocated: task.budgetAllocated,
+                    budgetRealized: task.budgetRealized,
+                    notes: task.notes,
+                  })
+                }
+                className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                title="Send to admin WhatsApp"
+              >
+                <MessageCircle className="w-4 h-4 mr-1.5" />
+                WhatsApp
+              </Button>
+            </div>
           </div>
         </div>
       )}

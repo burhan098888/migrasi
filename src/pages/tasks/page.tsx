@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { Plus, Pencil, Trash2, ListTodo, CheckCircle2, MessageCircle } from "lucide-react";
-import { sendTaskToWhatsApp } from "./_lib/whatsapp.ts";
+import { sendTaskToWhatsApp } from "@/lib/whatsapp.ts";
 import { formatRupiah } from "@/lib/currency.ts";
 import { getCurrentReportPeriod, type ReportPeriod } from "@/lib/report-period.ts";
 import { format } from "date-fns";

@@ -1,6 +1,6 @@
-const WHATSAPP_NUMBER = "6287789317769";
+const ADMIN_WHATSAPP_NUMBER = "6287789317769";
 
-type TaskMessageData = {
+export type TaskMessageData = {
   title: string;
   projectName: string;
   divisionName: string | null;
@@ -55,11 +55,11 @@ function buildTaskMessage(task: TaskMessageData): string {
 }
 
 /**
- * Open WhatsApp with a pre-filled task message
+ * Open WhatsApp with a pre-filled task message to the admin
  */
 export function sendTaskToWhatsApp(task: TaskMessageData): void {
   const message = buildTaskMessage(task);
   const encoded = encodeURIComponent(message);
-  const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`;
+  const url = `https://wa.me/${ADMIN_WHATSAPP_NUMBER}?text=${encoded}`;
   window.open(url, "_blank", "noopener,noreferrer");
 }
