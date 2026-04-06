@@ -191,6 +191,56 @@ export const getMyHistory = query({
   },
 });
 
+/** Get attendance records with location data for a date range */
+export const getLocationReport = query({
+  args: {
+    startDate: v.string(),
+    endDate: v.string(),
+    userId: v.optional(v.id("users")),
+    demoMode: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const { effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
+
+    const allRecords = await ctx.db
+      .query("attendance")
+      .withIndex("by_date", (q) =>
+        q.gte("date", args.startDate).lte("date", args.endDate),
+      )
+      .order("desc")
+      .collect();
+
+    let records = filterDemo(allRecords, effectiveDemoMode);
+
+    // Optional user filter
+    if (args.userId) {
+      records = records.filter((r) => r.userId === args.userId);
+    }
+
+    // Enrich with user data
+    const enriched = await Promise.all(
+      records.map(async (record) => {
+        const user = await ctx.db.get(record.userId);
+        return {
+          _id: record._id,
+          date: record.date,
+          userName: user?.name ?? "Unknown",
+          userId: record.userId,
+          checkInTime: record.checkInTime,
+          checkOutTime: record.checkOutTime,
+          checkInLat: record.checkInLat,
+          checkInLng: record.checkInLng,
+          checkOutLat: record.checkOutLat,
+          checkOutLng: record.checkOutLng,
+          status: record.status,
+        };
+      }),
+    );
+
+    return enriched;
+  },
+});
+
 /** Get attendance summary stats for admin/manager dashboard */
 export const getStats = query({
   args: {

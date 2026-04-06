@@ -10,6 +10,7 @@ import TodayAttendanceList from "./_components/today-attendance-list.tsx";
 import AttendanceStats from "./_components/attendance-stats.tsx";
 import MyHistory from "./_components/my-history.tsx";
 import TeamSummary from "./_components/team-summary.tsx";
+import LocationReport from "./_components/location-report.tsx";
 import DateRangePicker, {
   getThisMonthRange,
 } from "./_components/date-range-picker.tsx";
@@ -45,6 +46,9 @@ export default function AttendancePage() {
           {showAdminTabs && (
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           )}
+          {showAdminTabs && (
+            <TabsTrigger value="location">Location</TabsTrigger>
+          )}
         </TabsList>
 
         {/* Today tab */}
@@ -73,6 +77,17 @@ export default function AttendancePage() {
               endDate={dateRange.endDate}
             />
             <TeamSummary
+              startDate={dateRange.startDate}
+              endDate={dateRange.endDate}
+            />
+          </TabsContent>
+        )}
+
+        {/* Location tab */}
+        {showAdminTabs && (
+          <TabsContent value="location" className="space-y-6">
+            <DateRangePicker range={dateRange} onRangeChange={setDateRange} />
+            <LocationReport
               startDate={dateRange.startDate}
               endDate={dateRange.endDate}
             />
