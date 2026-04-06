@@ -413,6 +413,214 @@ export const getLeaderboard = query({
 });
 
 // ────────────────────────────────────────────────
+// Comprehensive KPI: Tasks + Attendance + Reward/Punishment
+// ────────────────────────────────────────────────
+
+export const getComprehensiveKPI = query({
+  args: {
+    periodStart: v.optional(v.string()),
+    periodEnd: v.optional(v.string()),
+    demoMode: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const { effectiveDemoMode } = await resolveDemoAccess(ctx, args.demoMode);
+
+    const [rawTasks, rawAttendance, rawRP, users, rawHolidays] = await Promise.all([
+      ctx.db.query("tasks").collect(),
+      ctx.db.query("attendance").collect(),
+      ctx.db.query("rewardPunishments").collect(),
+      ctx.db.query("users").collect(),
+      ctx.db.query("holidays").collect(),
+    ]);
+
+    const allTasks = filterDemo(rawTasks, effectiveDemoMode);
+    const allAttendance = filterDemo(rawAttendance, effectiveDemoMode);
+    const allRP = filterDemo(rawRP, effectiveDemoMode);
+    const holidays = filterDemo(rawHolidays, effectiveDemoMode);
+
+    // Filter tasks by period
+    const tasks = filterByPeriod(allTasks, args.periodStart, args.periodEnd);
+
+    // Extract YYYY-MM-DD boundaries for attendance & R&P
+    const pStart = args.periodStart?.split("T")[0];
+    const pEnd = args.periodEnd?.split("T")[0];
+
+    const attendance =
+      pStart && pEnd
+        ? allAttendance.filter((a) => a.date >= pStart && a.date <= pEnd)
+        : allAttendance;
+
+    const rp =
+      pStart && pEnd
+        ? allRP.filter((r) => {
+            const d = r.date.length > 10 ? r.date.split("T")[0] : r.date;
+            return d >= pStart && d <= pEnd;
+          })
+        : allRP;
+
+    // Calculate working days in period (weekdays minus holidays)
+    let workingDays = 0;
+    if (pStart && pEnd) {
+      const holidayDates = new Set(holidays.map((h) => h.date));
+      const current = new Date(pStart + "T00:00:00Z");
+      const end = new Date(pEnd + "T00:00:00Z");
+      while (current <= end) {
+        const day = current.getUTCDay();
+        if (day !== 0 && day !== 6) {
+          const dateStr = current.toISOString().split("T")[0];
+          if (!holidayDates.has(dateStr)) workingDays++;
+        }
+        current.setUTCDate(current.getUTCDate() + 1);
+      }
+    }
+
+    // ── Per-user calculations ──
+    const userKPIs = users.map((user) => {
+      const uid = user._id;
+
+      // Task metrics
+      const uTasks = tasks.filter((t) => t.assigneeId === uid);
+      const completed = uTasks.filter((t) => t.status === "complete").length;
+      const overdue = uTasks.filter((t) => t.status === "overdue").length;
+      const inProgress = uTasks.filter((t) => t.status === "in_progress").length;
+      const taskCompletionRate =
+        uTasks.length > 0 ? (completed / uTasks.length) * 100 : 0;
+      const onTimeRate =
+        completed + overdue > 0
+          ? (completed / (completed + overdue)) * 100
+          : 100;
+      const avgProgress =
+        uTasks.length > 0
+          ? uTasks.reduce((s, t) => s + t.progressPercentage, 0) / uTasks.length
+          : 0;
+
+      // Attendance metrics
+      const uAttendance = attendance.filter((a) => a.userId === uid);
+      const presentDays = uAttendance.length;
+      const completedAtt = uAttendance.filter((a) => a.status === "checked_out");
+      let totalWorkMin = 0;
+      for (const a of completedAtt) {
+        if (a.checkOutTime) {
+          totalWorkMin +=
+            (new Date(a.checkOutTime).getTime() -
+              new Date(a.checkInTime).getTime()) /
+            60000;
+        }
+      }
+      const avgWorkHours =
+        completedAtt.length > 0 ? totalWorkMin / completedAtt.length / 60 : 0;
+
+      // R&P metrics
+      const uRP = rp.filter((r) => r.userId === uid);
+      const rewards = uRP
+        .filter((r) => r.amount > 0)
+        .reduce((s, r) => s + r.amount, 0);
+      const punishments = uRP
+        .filter((r) => r.amount < 0)
+        .reduce((s, r) => s + r.amount, 0);
+      const rpNet = rewards + punishments;
+      const rewardCount = uRP.filter((r) => r.amount > 0).length;
+      const punishmentCount = uRP.filter((r) => r.amount < 0).length;
+
+      return {
+        userId: uid as string,
+        name: user.name ?? "Unknown",
+        role: user.role,
+        totalTasks: uTasks.length,
+        completedTasks: completed,
+        overdueTasks: overdue,
+        inProgressTasks: inProgress,
+        taskCompletionRate: Math.round(taskCompletionRate),
+        onTimeRate: Math.round(onTimeRate),
+        avgProgress: Math.round(avgProgress),
+        presentDays,
+        avgWorkHours: Math.round(avgWorkHours * 10) / 10,
+        rewards,
+        punishments,
+        rpNet,
+        rewardCount,
+        punishmentCount,
+      };
+    }).filter(
+      (u) =>
+        u.totalTasks > 0 || u.presentDays > 0 || u.rewardCount > 0 || u.punishmentCount > 0,
+    );
+
+    // ── Scoring ──
+    const maxCompleted = Math.max(...userKPIs.map((u) => u.completedTasks), 1);
+    const allNets = userKPIs.map((u) => u.rpNet);
+    const minNet = Math.min(...allNets, 0);
+    const maxNet = Math.max(...allNets, 0);
+    const netRange = maxNet - minNet || 1;
+
+    const scored = userKPIs
+      .map((u) => {
+        // Task score (0-100): 40% completion rate + 30% on-time + 30% volume
+        const volumeScore = (u.completedTasks / maxCompleted) * 100;
+        const taskScore =
+          u.taskCompletionRate * 0.4 + u.onTimeRate * 0.3 + volumeScore * 0.3;
+
+        // Attendance score (0-100): 60% attendance rate + 40% work hours
+        const attendanceRate =
+          workingDays > 0
+            ? Math.min(100, (u.presentDays / workingDays) * 100)
+            : u.presentDays > 0
+              ? 100
+              : 0;
+        const workHoursScore = Math.min(100, (u.avgWorkHours / 8) * 100);
+        const attendanceScore =
+          workingDays > 0 || u.presentDays > 0
+            ? attendanceRate * 0.6 + workHoursScore * 0.4
+            : 0;
+
+        // R&P score (0-100): normalized net balance
+        const rpScore = ((u.rpNet - minNet) / netRange) * 100;
+
+        // Overall: 40% tasks + 30% attendance + 30% R&P
+        const overallScore = Math.round(
+          taskScore * 0.4 + attendanceScore * 0.3 + rpScore * 0.3,
+        );
+
+        return {
+          ...u,
+          taskScore: Math.round(taskScore),
+          attendanceRate: Math.round(attendanceRate),
+          attendanceScore: Math.round(attendanceScore),
+          rpScore: Math.round(rpScore),
+          overallScore: Math.min(100, Math.max(0, overallScore)),
+        };
+      })
+      .sort((a, b) => b.overallScore - a.overallScore);
+
+    // Summary totals
+    const totalRewards = rp
+      .filter((r) => r.amount > 0)
+      .reduce((s, r) => s + r.amount, 0);
+    const totalPunishments = rp
+      .filter((r) => r.amount < 0)
+      .reduce((s, r) => s + r.amount, 0);
+    const avgAttendanceRate =
+      scored.length > 0
+        ? Math.round(
+            scored.reduce((s, u) => s + u.attendanceRate, 0) / scored.length,
+          )
+        : 0;
+
+    return {
+      users: scored.map((u, i) => ({ ...u, rank: i + 1 })),
+      summary: {
+        totalPresentDays: attendance.length,
+        totalRewards,
+        totalPunishments,
+        rpNet: totalRewards + totalPunishments,
+        workingDays,
+        avgAttendanceRate,
+      },
+    };
+  },
+});
+
+// ────────────────────────────────────────────────
 // Task completion trend over the last 6 report periods
 // ────────────────────────────────────────────────
 
