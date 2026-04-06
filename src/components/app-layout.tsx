@@ -38,6 +38,9 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 
   // In demo guest mode, show all nav items to showcase features
   const showAdminItems = isAdminOrManager || isDemoGuest;
+  // R&P is visible to admin, manager, and rp_manager
+  const showRPItem =
+    showAdminItems || user?.role === "rp_manager";
 
   const navItems = [
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -52,7 +55,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
     { to: "/my-tasks", icon: ClipboardList, label: "My Tasks" },
     { to: "/attendance", icon: MapPin, label: "Attendance" },
     { to: "/work-logs", icon: FileText, label: "Work Logs" },
-    ...(showAdminItems
+    ...(showRPItem
       ? [{ to: "/rewards", icon: Award, label: "Reward & Punishment" }]
       : []),
     { to: "/pkl-kpi", icon: GraduationCap, label: "PKL KPI" },

@@ -16,8 +16,14 @@ export function useUserRole() {
     isManager: user?.role === "manager",
     isStaff: user?.role === "staff",
     isPkl: user?.role === "pkl",
+    isRpManager: user?.role === "rp_manager",
     isAdminOrManager: user?.role === "admin" || user?.role === "manager",
-    hasRole: (roles: Array<"admin" | "manager" | "staff" | "pkl">) => {
+    /** Whether the user can add/edit Reward & Punishment records */
+    canManageRP:
+      user?.role === "admin" ||
+      user?.role === "manager" ||
+      user?.role === "rp_manager",
+    hasRole: (roles: Array<"admin" | "manager" | "staff" | "pkl" | "rp_manager">) => {
       return user ? roles.includes(user.role) : false;
     },
   };

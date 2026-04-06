@@ -47,7 +47,7 @@ const SPREADSHEET_URL =
   "https://docs.google.com/spreadsheets/d/1GVJq0_edsfHQ_LSEyCb-Tl7ICpOZ-m-_I-3NXyBMBl4/edit?usp=sharing";
 
 export default function RewardsPage() {
-  const { user: currentUser, isAdminOrManager } = useUserRole();
+  const { user: currentUser, isAdminOrManager, canManageRP } = useUserRole();
   const { demoModeArg, isDemoGuest } = useDemoMode();
   const records = useQuery(api.rewardPunishments.list, { demoMode: demoModeArg });
   const summary = useQuery(api.rewardPunishments.summary, { demoMode: demoModeArg });
@@ -105,11 +105,11 @@ export default function RewardsPage() {
     );
   }
 
-  if (!isAdminOrManager && !isDemoGuest) {
+  if (!isAdminOrManager && !canManageRP && !isDemoGuest) {
     return (
       <div className="p-6">
         <p className="text-muted-foreground">
-          Only admins and managers can access this page.
+          Only admins, managers, and RP managers can access this page.
         </p>
       </div>
     );
@@ -137,7 +137,7 @@ export default function RewardsPage() {
             <ExternalLink className="w-4 h-4 mr-1.5" />
             Spreadsheet
           </Button>
-          {!isDemoGuest && (
+          {!isDemoGuest && canManageRP && (
             <Button size="sm" onClick={() => setDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-1" />
               Add Record
@@ -316,7 +316,7 @@ export default function RewardsPage() {
                     : "No records for this filter"}
                 </EmptyDescription>
               </EmptyHeader>
-              {records.length === 0 && !isDemoGuest && (
+              {records.length === 0 && !isDemoGuest && canManageRP && (
                 <EmptyContent>
                   <Button size="sm" onClick={() => setDialogOpen(true)}>
                     <Plus className="w-4 h-4 mr-1" />
@@ -337,7 +337,7 @@ export default function RewardsPage() {
                       Ayat
                     </TableHead>
                     <TableHead className="font-semibold">Description</TableHead>
-                    {!isDemoGuest && (
+                    {!isDemoGuest && canManageRP && (
                       <TableHead className="font-semibold w-16">
                         Actions
                       </TableHead>
@@ -393,7 +393,7 @@ export default function RewardsPage() {
                             </span>
                           )}
                         </TableCell>
-                        {!isDemoGuest && (
+                        {!isDemoGuest && canManageRP && (
                           <TableCell>
                             <Button
                               variant="ghost"

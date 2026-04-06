@@ -1,6 +1,11 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { requireAdminOrManager, filterDemo, resolveDemoAccess } from "./helpers.ts";
+import { requireRole, filterDemo, resolveDemoAccess } from "./helpers.ts";
+
+/** Require admin, manager, or rp_manager for R&P write operations */
+async function requireRPAccess(ctx: Parameters<typeof requireRole>[0]) {
+  return requireRole(ctx, ["admin", "manager", "rp_manager"]);
+}
 
 export const list = query({
   args: {
@@ -79,7 +84,7 @@ export const create = mutation({
     isDemo: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<void> => {
-    await requireAdminOrManager(ctx);
+    await requireRPAccess(ctx);
     await ctx.db.insert("rewardPunishments", {
       userId: args.userId,
       amount: args.amount,
@@ -99,7 +104,7 @@ export const update = mutation({
     date: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<void> => {
-    await requireAdminOrManager(ctx);
+    await requireRPAccess(ctx);
     const record = await ctx.db.get(args.id);
     if (!record) {
       throw new ConvexError({ message: "Record not found", code: "NOT_FOUND" });
@@ -115,7 +120,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("rewardPunishments") },
   handler: async (ctx, args): Promise<void> => {
-    await requireAdminOrManager(ctx);
+    await requireRPAccess(ctx);
     await ctx.db.delete(args.id);
   },
 });
