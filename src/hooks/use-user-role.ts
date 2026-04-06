@@ -23,6 +23,16 @@ export function useUserRole() {
       user?.role === "admin" ||
       user?.role === "manager" ||
       user?.role === "rp_manager",
+    /** Whether the user can view the Task Manager (read-only for rp_manager) */
+    canViewTasks:
+      user?.role === "admin" ||
+      user?.role === "manager" ||
+      user?.role === "rp_manager",
+    /** Whether the user can view attendance admin tabs (read-only for rp_manager) */
+    canViewAttendanceAdmin:
+      user?.role === "admin" ||
+      user?.role === "manager" ||
+      user?.role === "rp_manager",
     hasRole: (roles: Array<"admin" | "manager" | "staff" | "pkl" | "rp_manager">) => {
       return user ? roles.includes(user.role) : false;
     },

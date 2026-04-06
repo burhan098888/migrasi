@@ -77,8 +77,10 @@ type EnrichedTask = {
 const VALID_STATUSES = ["all", "not_started", "in_progress", "complete", "overdue"];
 
 export default function TasksPage() {
-  const { user: currentUser, isAdminOrManager } = useUserRole();
+  const { user: currentUser, isAdminOrManager, canViewTasks } = useUserRole();
   const { demoModeArg, isDemoGuest } = useDemoMode();
+  // RP Manager can view but not create/edit/delete tasks
+  const isReadOnly = canViewTasks && !isAdminOrManager;
   const tasks = useQuery(api.tasks.list, { demoMode: demoModeArg });
   const allUsers = useQuery(api.users.listAll, { demoMode: demoModeArg });
   const markOverdue = useMutation(api.tasks.markOverdueTasks);
@@ -135,11 +137,11 @@ export default function TasksPage() {
   }, [currentUser, markOverdue]);
 
   useEffect(() => {
-    if (currentUser && !isAdminOrManager && !isDemoGuest) {
-      toast.error("Only admins and managers can access the task manager");
+    if (currentUser && !canViewTasks && !isDemoGuest) {
+      toast.error("Only admins, managers, and RP managers can access the task manager");
       navigate("/dashboard");
     }
-  }, [currentUser, isAdminOrManager, isDemoGuest, navigate]);
+  }, [currentUser, canViewTasks, isDemoGuest, navigate]);
 
   const filteredTasks = useMemo(() => {
     if (!tasks) return [];
@@ -190,7 +192,7 @@ export default function TasksPage() {
     );
   }
 
-  if (!isAdminOrManager && !isDemoGuest) return null;
+  if (!canViewTasks && !isDemoGuest) return null;
 
   const openCreate = () => {
     setEditingTask(null);
@@ -240,7 +242,7 @@ export default function TasksPage() {
               : "Create, assign, and manage all tasks across projects"}
           </p>
         </div>
-        {!isDemoGuest && (
+        {!isDemoGuest && !isReadOnly && (
           <Button size="sm" onClick={openCreate}>
             <Plus className="w-4 h-4 mr-1" />
             New Task
@@ -396,7 +398,7 @@ export default function TasksPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      {!isDemoGuest && (
+                      {!isDemoGuest && !isReadOnly && (
                         <>
                           {/* Send to WhatsApp */}
                           <Button

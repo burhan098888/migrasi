@@ -31,22 +31,26 @@ import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 
 function SidebarContent({ collapsed }: { collapsed: boolean }) {
-  const { user, isAdminOrManager, isAuthenticated } = useUserRole();
+  const { user, isAdminOrManager, canViewTasks, isAuthenticated } = useUserRole();
   const { removeUser } = useAuth();
   const { isDemoGuest, exitDemoMode } = useDemoMode();
   const navigate = useNavigate();
 
   // In demo guest mode, show all nav items to showcase features
   const showAdminItems = isAdminOrManager || isDemoGuest;
+  // Task Manager is visible to admin, manager, rp_manager, and demo guests
+  const showTaskManager = canViewTasks || isDemoGuest;
   // R&P is visible to admin, manager, and rp_manager
   const showRPItem =
     showAdminItems || user?.role === "rp_manager";
 
   const navItems = [
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    ...(showTaskManager
+      ? [{ to: "/tasks", icon: ListTodo, label: "Task Manager" }]
+      : []),
     ...(showAdminItems
       ? [
-          { to: "/tasks", icon: ListTodo, label: "Task Manager" },
           { to: "/projects", icon: FolderKanban, label: "Projects" },
           { to: "/divisions", icon: Building2, label: "Divisions" },
           { to: "/users", icon: Users, label: "Users" },

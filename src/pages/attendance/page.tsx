@@ -17,13 +17,13 @@ import DateRangePicker, {
 import type { DateRange } from "./_components/date-range-picker.tsx";
 
 export default function AttendancePage() {
-  const { isAdminOrManager } = useUserRole();
+  const { isAdminOrManager, canViewAttendanceAdmin } = useUserRole();
   const { isDemoGuest } = useDemoMode();
   const today = new Date();
   const [dateRange, setDateRange] = useState<DateRange>(getThisMonthRange());
 
-  // Demo guests see all tabs (showcase mode)
-  const showAdminTabs = isAdminOrManager || isDemoGuest;
+  // Demo guests and rp_manager see admin tabs (read-only for rp_manager)
+  const showAdminTabs = canViewAttendanceAdmin || isDemoGuest;
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto">
