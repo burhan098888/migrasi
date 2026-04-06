@@ -55,9 +55,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
     ...(showAdminItems
       ? [{ to: "/rewards", icon: Award, label: "Reward & Punishment" }]
       : []),
-    ...(showAdminItems
-      ? [{ to: "/pkl-kpi", icon: GraduationCap, label: "PKL KPI" }]
-      : []),
+    { to: "/pkl-kpi", icon: GraduationCap, label: "PKL KPI" },
     { to: "/analytics", icon: BarChart3, label: "Analytics" },
     { to: "/calendar", icon: CalendarDays, label: "Calendar" },
   ];
