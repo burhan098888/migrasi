@@ -14,6 +14,7 @@ import type * as divisions from "../divisions.js";
 import type * as helpers from "../helpers.js";
 import type * as holidays from "../holidays.js";
 import type * as projects from "../projects.js";
+import type * as rewardPunishments from "../rewardPunishments.js";
 import type * as tasks from "../tasks.js";
 import type * as users from "../users.js";
 import type * as workLogs from "../workLogs.js";
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   helpers: typeof helpers;
   holidays: typeof holidays;
   projects: typeof projects;
+  rewardPunishments: typeof rewardPunishments;
   tasks: typeof tasks;
   users: typeof users;
   workLogs: typeof workLogs;

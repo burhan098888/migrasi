@@ -21,6 +21,7 @@ import {
   MapPin,
   Eye,
   ArrowLeft,
+  Award,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth.ts";
@@ -50,11 +51,14 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
     { to: "/my-tasks", icon: ClipboardList, label: "My Tasks" },
     { to: "/attendance", icon: MapPin, label: "Attendance" },
     { to: "/work-logs", icon: FileText, label: "Work Logs" },
+    ...(showAdminItems
+      ? [{ to: "/rewards", icon: Award, label: "Reward & Punishment" }]
+      : []),
     { to: "/analytics", icon: BarChart3, label: "Analytics" },
     { to: "/calendar", icon: CalendarDays, label: "Calendar" },
   ];
 
-  const availableRoutes = ["/dashboard", "/users", "/tasks", "/projects", "/divisions", "/my-tasks", "/attendance", "/work-logs", "/analytics", "/calendar"];
+  const availableRoutes = ["/dashboard", "/users", "/tasks", "/projects", "/divisions", "/my-tasks", "/attendance", "/work-logs", "/rewards", "/analytics", "/calendar"];
 
   return (
     <div className="flex flex-col h-full">

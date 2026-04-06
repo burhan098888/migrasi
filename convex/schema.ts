@@ -87,4 +87,15 @@ export default defineSchema({
   })
     .index("by_user_and_date", ["userId", "date"])
     .index("by_date", ["date"]),
+
+  rewardPunishments: defineTable({
+    userId: v.id("users"),
+    amount: v.number(), // negative = punishment, positive = reward (tabungan akhirat)
+    description: v.string(),
+    date: v.string(), // ISO date string
+    taskId: v.optional(v.id("tasks")),
+    isDemo: v.optional(v.boolean()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_date", ["date"]),
 });
