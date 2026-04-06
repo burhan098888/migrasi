@@ -3,7 +3,7 @@ import { api } from "@/convex/_generated/api.js";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { cn } from "@/lib/utils.ts";
-import { formatRupiah } from "@/lib/currency.ts";
+import { formatVerses } from "@/lib/verses.ts";
 import {
   GraduationCap,
   CalendarCheck,
@@ -203,7 +203,7 @@ function InternCard({ intern }: { intern: InternKPI }) {
             <ScoreBar
               label="Reward & Punishment (30%)"
               score={intern.rpScore}
-              detail={`${formatRupiah(intern.rewards)} reward | ${formatRupiah(intern.punishments)} punishment | Net: ${formatRupiah(intern.rpNet)}`}
+              detail={`${formatVerses(intern.rewards)} reward | ${formatVerses(intern.punishments)} punishment | Net: ${formatVerses(intern.rpNet)}`}
             />
           </div>
 
@@ -326,19 +326,19 @@ export default function PklKpiPage() {
             <KpiCard
               icon={Star}
               title="Total Rewards"
-              value={formatRupiah(kpiData.summary.totalRewards)}
+              value={`${kpiData.summary.totalRewards} ayat`}
               accent="success"
             />
             <KpiCard
               icon={AlertOctagon}
               title="Punishments"
-              value={formatRupiah(Math.abs(kpiData.summary.totalPunishments))}
+              value={`${Math.abs(kpiData.summary.totalPunishments)} ayat`}
               accent={kpiData.summary.totalPunishments < 0 ? "danger" : "default"}
             />
             <KpiCard
               icon={Trophy}
               title="Net Balance"
-              value={formatRupiah(kpiData.summary.rpNet)}
+              value={`${kpiData.summary.rpNet} ayat`}
               accent={kpiData.summary.rpNet >= 0 ? "success" : "danger"}
             />
           </div>

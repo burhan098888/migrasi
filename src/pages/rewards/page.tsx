@@ -39,7 +39,7 @@ import {
   Minus as MinusIcon,
 } from "lucide-react";
 import { format } from "date-fns";
-import { formatRupiah } from "@/lib/currency.ts";
+import { formatVerses } from "@/lib/verses.ts";
 import RewardFormDialog from "./_components/reward-form-dialog.tsx";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 
@@ -124,8 +124,8 @@ export default function RewardsPage() {
             Reward & Punishment
           </h1>
           <p className="text-muted-foreground mt-1">
-            Track staff rewards (tabungan akhirat) and punishments from daily
-            tasks
+            Track rewards (tabungan akhirat) and punishments in Quran verses
+            (ayat)
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -148,9 +148,9 @@ export default function RewardsPage() {
 
       {/* Note banner */}
       <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-6 text-sm text-amber-800 dark:text-amber-300">
-        <strong>Catatan:</strong> Tanda minus (-) berarti hukuman (punishment),
-        selain itu berarti tabungan akhirat (reward). Detail ada di sheet Task
-        harian.
+        <strong>Catatan:</strong> Tanda minus (-) berarti hukuman (punishment) —
+        wajib membaca ayat Al-Quran sejumlah tersebut. Selain itu berarti
+        tabungan akhirat (reward). Detail ada di sheet Task harian.
       </div>
 
       {/* Summary cards */}
@@ -163,7 +163,7 @@ export default function RewardsPage() {
             </span>
           </div>
           <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {formatRupiah(totals.rewards)}
+            {formatVerses(totals.rewards)}
           </p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
@@ -174,7 +174,7 @@ export default function RewardsPage() {
             </span>
           </div>
           <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-            {formatRupiah(totals.punishments)}
+            {formatVerses(totals.punishments)}
           </p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
@@ -185,7 +185,7 @@ export default function RewardsPage() {
           <p
             className={`text-2xl font-bold ${totals.net >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
           >
-            {formatRupiah(totals.net)}
+            {formatVerses(totals.net)}
           </p>
         </div>
       </div>
@@ -253,16 +253,16 @@ export default function RewardsPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right text-sm text-green-600 dark:text-green-400">
-                        {formatRupiah(s.rewards)}
+                        {formatVerses(s.rewards)}
                       </TableCell>
                       <TableCell className="text-right text-sm text-red-600 dark:text-red-400">
-                        {formatRupiah(s.punishments)}
+                        {formatVerses(s.punishments)}
                       </TableCell>
                       <TableCell className="text-right">
                         <span
                           className={`font-semibold text-sm ${s.net >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
                         >
-                          {formatRupiah(s.net)}
+                          {formatVerses(s.net)}
                         </span>
                       </TableCell>
                       <TableCell className="text-center text-muted-foreground text-sm">
@@ -334,7 +334,7 @@ export default function RewardsPage() {
                     <TableHead className="font-semibold">Staff</TableHead>
                     <TableHead className="font-semibold">Type</TableHead>
                     <TableHead className="font-semibold text-right">
-                      Amount
+                      Ayat
                     </TableHead>
                     <TableHead className="font-semibold">Description</TableHead>
                     {!isDemoGuest && (
@@ -383,7 +383,7 @@ export default function RewardsPage() {
                           className={`text-right font-semibold text-sm ${isPunishment ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}
                         >
                           {isPunishment ? "- " : "+ "}
-                          {formatRupiah(Math.abs(r.amount))}
+                          {formatVerses(Math.abs(r.amount))}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground max-w-[250px] truncate">
                           {r.description}

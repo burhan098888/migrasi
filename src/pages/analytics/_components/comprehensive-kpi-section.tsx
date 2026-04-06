@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils.ts";
-import { formatRupiah } from "@/lib/currency.ts";
+import { formatVerses } from "@/lib/verses.ts";
 import { Badge } from "@/components/ui/badge.tsx";
 import {
   CalendarCheck,
@@ -293,7 +293,7 @@ function UserKPICard({ user }: { user: KPIUser }) {
         <ScoreBar
           label="Reward & Punishment"
           score={user.rpScore}
-          detail={`${formatRupiah(user.rewards)} reward | ${formatRupiah(user.punishments)} punishment | Net: ${formatRupiah(user.rpNet)}`}
+          detail={`${formatVerses(user.rewards)} reward | ${formatVerses(user.punishments)} punishment | Net: ${formatVerses(user.rpNet)}`}
         />
       </div>
 
@@ -366,19 +366,19 @@ export default function ComprehensiveKPISection({ users, summary }: Props) {
         <KpiCard
           icon={Star}
           title="Total Rewards"
-          value={formatRupiah(summary.totalRewards)}
+          value={`${summary.totalRewards} ayat`}
           accent="success"
         />
         <KpiCard
           icon={AlertOctagon}
           title="Punishments"
-          value={formatRupiah(Math.abs(summary.totalPunishments))}
+          value={`${Math.abs(summary.totalPunishments)} ayat`}
           accent={summary.totalPunishments < 0 ? "danger" : "default"}
         />
         <KpiCard
           icon={Trophy}
           title="Net Balance"
-          value={formatRupiah(summary.rpNet)}
+          value={`${summary.rpNet} ayat`}
           accent={summary.rpNet >= 0 ? "success" : "danger"}
         />
       </div>

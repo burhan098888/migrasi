@@ -67,7 +67,7 @@ export default function RewardFormDialog({
     setSubmitted(true);
     const missingFields: string[] = [];
     if (!form.userId) missingFields.push("Staff Member");
-    if (!form.amount || parseFloat(form.amount) === 0) missingFields.push("Amount");
+    if (!form.amount || parseFloat(form.amount) === 0) missingFields.push("Jumlah Ayat");
     if (!form.description.trim()) missingFields.push("Description");
     if (!form.date) missingFields.push("Date");
 
@@ -89,7 +89,7 @@ export default function RewardFormDialog({
       });
       toast.success(
         form.type === "punishment"
-          ? "Punishment recorded"
+          ? "Punishment recorded — ayat Al-Quran harus dibaca"
           : "Reward (tabungan akhirat) recorded",
       );
       onOpenChange(false);
@@ -119,8 +119,8 @@ export default function RewardFormDialog({
           <DialogTitle>Add Reward / Punishment</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground -mt-2">
-          Positive amount = tabungan akhirat (reward). Punishment will be stored
-          as negative.
+          Jumlah ayat Al-Quran yang harus dibaca. Reward = tabungan akhirat.
+          Punishment = wajib baca ayat sejumlah tersebut.
         </p>
         <div className="space-y-4 pt-2">
           {/* Staff Member */}
@@ -166,10 +166,10 @@ export default function RewardFormDialog({
             </Select>
           </div>
 
-          {/* Amount */}
+          {/* Verse Count */}
           <div>
             <Label>
-              Amount <span className="text-destructive">*</span>
+              Jumlah Ayat <span className="text-destructive">*</span>
             </Label>
             <Input
               type="number"
@@ -177,7 +177,7 @@ export default function RewardFormDialog({
               step="1"
               value={form.amount}
               onChange={(e) => updateField("amount", e.target.value)}
-              placeholder="e.g. 50000"
+              placeholder="e.g. 5"
               className={fieldError(form.amount)}
             />
           </div>
