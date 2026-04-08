@@ -100,4 +100,40 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_date", ["date"]),
+
+  adCalculations: defineTable({
+    name: v.string(),
+    createdBy: v.id("users"),
+    shareToken: v.string(),
+    ppnRate: v.number(),
+  })
+    .index("by_creator", ["createdBy"])
+    .index("by_share_token", ["shareToken"]),
+
+  adIncomeEntries: defineTable({
+    calculationId: v.id("adCalculations"),
+    date: v.string(),
+    amount: v.number(),
+  }).index("by_calculation", ["calculationId"]),
+
+  adExpenseEntries: defineTable({
+    calculationId: v.id("adCalculations"),
+    description: v.string(),
+    amount: v.number(),
+  }).index("by_calculation", ["calculationId"]),
+
+  adResultEntries: defineTable({
+    calculationId: v.id("adCalculations"),
+    label: v.string(),
+    value: v.number(),
+    isMonetary: v.boolean(),
+  }).index("by_calculation", ["calculationId"]),
+
+  adRecurringBills: defineTable({
+    calculationId: v.id("adCalculations"),
+    description: v.string(),
+    amount: v.number(),
+    dayOfMonth: v.number(),
+    isActive: v.boolean(),
+  }).index("by_calculation", ["calculationId"]),
 });

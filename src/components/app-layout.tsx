@@ -23,6 +23,7 @@ import {
   ArrowLeft,
   Award,
   GraduationCap,
+  Calculator,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth.ts";
@@ -54,6 +55,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           { to: "/projects", icon: FolderKanban, label: "Projects" },
           { to: "/divisions", icon: Building2, label: "Divisions" },
           { to: "/users", icon: Users, label: "Users" },
+          { to: "/ad-calculations", icon: Calculator, label: "Ad Calc" },
         ]
       : []),
     { to: "/my-tasks", icon: ClipboardList, label: "My Tasks" },
@@ -67,7 +69,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
     { to: "/calendar", icon: CalendarDays, label: "Calendar" },
   ];
 
-  const availableRoutes = ["/dashboard", "/users", "/tasks", "/projects", "/divisions", "/my-tasks", "/attendance", "/work-logs", "/rewards", "/pkl-kpi", "/analytics", "/calendar"];
+  const availableRoutes = ["/dashboard", "/users", "/tasks", "/projects", "/divisions", "/my-tasks", "/attendance", "/work-logs", "/rewards", "/pkl-kpi", "/analytics", "/calendar", "/ad-calculations"];
 
   return (
     <div className="flex flex-col h-full">

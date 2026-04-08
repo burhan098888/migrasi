@@ -17,6 +17,8 @@ import WorkLogsPage from "./pages/work-logs/page.tsx";
 import AttendancePage from "./pages/attendance/page.tsx";
 import RewardsPage from "./pages/rewards/page.tsx";
 import PklKpiPage from "./pages/pkl-kpi/page.tsx";
+import AdCalculationsPage from "./pages/ad-calculations/page.tsx";
+import AdCalculationDetailPage from "./pages/ad-calculations/detail/page.tsx";
 import { useServiceWorker } from "@/hooks/use-service-worker.ts";
 
 export default function App() {
@@ -42,6 +44,8 @@ export default function App() {
             <Route path="/attendance" element={<AttendancePage />} />
             <Route path="/rewards" element={<RewardsPage />} />
             <Route path="/pkl-kpi" element={<PklKpiPage />} />
+            <Route path="/ad-calculations" element={<AdCalculationsPage />} />
+            <Route path="/ad-calculations/:id" element={<AdCalculationDetailPage />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
