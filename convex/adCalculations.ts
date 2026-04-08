@@ -354,3 +354,52 @@ export const removeResult = mutation({
     await ctx.db.delete(args.id);
   },
 });
+
+// ─── Recurring Bill CRUD ─────────────────────────
+
+export const addRecurringBill = mutation({
+  args: {
+    calculationId: v.id("adCalculations"),
+    description: v.string(),
+    amount: v.number(),
+    dayOfMonth: v.number(),
+    isActive: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    await getCurrentUser(ctx);
+    return await ctx.db.insert("adRecurringBills", {
+      calculationId: args.calculationId,
+      description: args.description,
+      amount: args.amount,
+      dayOfMonth: args.dayOfMonth,
+      isActive: args.isActive,
+    });
+  },
+});
+
+export const updateRecurringBill = mutation({
+  args: {
+    id: v.id("adRecurringBills"),
+    description: v.string(),
+    amount: v.number(),
+    dayOfMonth: v.number(),
+    isActive: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    await getCurrentUser(ctx);
+    await ctx.db.patch(args.id, {
+      description: args.description,
+      amount: args.amount,
+      dayOfMonth: args.dayOfMonth,
+      isActive: args.isActive,
+    });
+  },
+});
+
+export const removeRecurringBill = mutation({
+  args: { id: v.id("adRecurringBills") },
+  handler: async (ctx, args) => {
+    await getCurrentUser(ctx);
+    await ctx.db.delete(args.id);
+  },
+});

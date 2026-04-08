@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils.ts";
 import IncomeSection from "../_components/income-section.tsx";
 import ExpenseSection from "../_components/expense-section.tsx";
 import ResultSection from "../_components/result-section.tsx";
+import RecurringBillSection from "../_components/recurring-bill-section.tsx";
 
 function DetailContent() {
   const { id } = useParams<{ id: string }>();
@@ -140,6 +141,12 @@ function DetailContent() {
           ppnRate={calc.ppnRate}
         />
       </div>
+
+      {/* Recurring Bills */}
+      <RecurringBillSection
+        calculationId={calc._id}
+        bills={calc.recurringBills}
+      />
 
       {/* Results */}
       <ResultSection
