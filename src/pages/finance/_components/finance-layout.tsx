@@ -1,10 +1,11 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { Home, Clock, Plus, Grid3X3 } from "lucide-react";
+import { Home, Clock, Plus, Grid3X3, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils.ts";
-import { useState } from "react";
 import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 import { SignInButton } from "@/components/ui/signin.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
+import { useUserRole } from "@/hooks/use-user-role.ts";
+import { Button } from "@/components/ui/button.tsx";
 
 function BottomNav() {
   const navItems = [
@@ -84,6 +85,44 @@ function FinanceInner() {
   );
 }
 
+function FinanceRoleGate() {
+  const { user, isAdminOrManager } = useUserRole();
+  const navigate = useNavigate();
+
+  // Still loading user data
+  if (user === undefined) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="space-y-4 w-64">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdminOrManager) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center space-y-4 px-6">
+          <div className="mx-auto w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center">
+            <ShieldAlert className="w-7 h-7 text-destructive" />
+          </div>
+          <h2 className="text-xl font-bold">Akses Ditolak</h2>
+          <p className="text-muted-foreground text-sm">
+            Halaman Finance hanya dapat diakses oleh Admin dan Manager.
+          </p>
+          <Button onClick={() => navigate("/dashboard")} className="cursor-pointer">
+            Kembali ke Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return <FinanceInner />;
+}
+
 export default function FinanceLayout() {
   return (
     <>
@@ -105,7 +144,7 @@ export default function FinanceLayout() {
         </div>
       </Unauthenticated>
       <Authenticated>
-        <FinanceInner />
+        <FinanceRoleGate />
       </Authenticated>
     </>
   );
