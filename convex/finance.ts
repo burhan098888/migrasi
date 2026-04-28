@@ -7,11 +7,10 @@ import { getCurrentUser } from "./helpers";
 export const listWallets = query({
   args: {},
   handler: async (ctx) => {
-    const user = await getCurrentUser(ctx);
-    return await ctx.db
-      .query("financeWallets")
-      .withIndex("by_creator", (q) => q.eq("createdBy", user._id))
-      .collect();
+    // Ensure user is authenticated
+    await getCurrentUser(ctx);
+    // Finance data is shared across all authorized users (Admin/Manager)
+    return await ctx.db.query("financeWallets").collect();
   },
 });
 
@@ -48,11 +47,9 @@ export const deleteWallet = mutation({
 export const listCategories = query({
   args: {},
   handler: async (ctx) => {
-    const user = await getCurrentUser(ctx);
-    return await ctx.db
-      .query("financeCategories")
-      .withIndex("by_creator", (q) => q.eq("createdBy", user._id))
-      .collect();
+    await getCurrentUser(ctx);
+    // Finance data is shared across all authorized users
+    return await ctx.db.query("financeCategories").collect();
   },
 });
 
@@ -87,12 +84,9 @@ export const deleteCategory = mutation({
 export const listTransactions = query({
   args: {},
   handler: async (ctx) => {
-    const user = await getCurrentUser(ctx);
-    return await ctx.db
-      .query("financeTransactions")
-      .withIndex("by_creator", (q) => q.eq("createdBy", user._id))
-      .order("desc")
-      .collect();
+    await getCurrentUser(ctx);
+    // Finance data is shared across all authorized users
+    return await ctx.db.query("financeTransactions").order("desc").collect();
   },
 });
 
@@ -144,16 +138,11 @@ export const deleteTransaction = mutation({
 export const getDashboardSummary = query({
   args: { month: v.string() }, // "2026-04" format
   handler: async (ctx, args) => {
-    const user = await getCurrentUser(ctx);
-    const transactions = await ctx.db
-      .query("financeTransactions")
-      .withIndex("by_creator", (q) => q.eq("createdBy", user._id))
-      .collect();
+    await getCurrentUser(ctx);
+    // Finance data is shared across all authorized users
+    const transactions = await ctx.db.query("financeTransactions").collect();
 
-    const wallets = await ctx.db
-      .query("financeWallets")
-      .withIndex("by_creator", (q) => q.eq("createdBy", user._id))
-      .collect();
+    const wallets = await ctx.db.query("financeWallets").collect();
 
     // Filter by month
     const monthTxns = transactions.filter((t) => t.date.startsWith(args.month));
