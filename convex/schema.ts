@@ -12,6 +12,7 @@ export default defineSchema({
       v.literal("staff"),
       v.literal("pkl"),
       v.literal("rp_manager"),
+      v.literal("admin_iklan"),
     ),
     divisionId: v.optional(v.id("divisions")),
   })
@@ -163,4 +164,22 @@ export default defineSchema({
     .index("by_creator", ["createdBy"])
     .index("by_wallet", ["walletId"])
     .index("by_date", ["date"]),
+
+  // ── Ad Profit Calculator (separate from Tracker & Finance) ──
+  adProfitCampaigns: defineTable({
+    name: v.string(),
+    ppnRate: v.number(), // PPN percentage, e.g. 11
+    createdBy: v.id("users"),
+  }).index("by_creator", ["createdBy"]),
+
+  adProfitEntries: defineTable({
+    campaignId: v.id("adProfitCampaigns"),
+    date: v.string(), // ISO date
+    adSpend: v.number(), // raw ad spend before PPN
+    leads: v.number(),
+    donation: v.number(), // income / donation amount
+    notes: v.optional(v.string()),
+  })
+    .index("by_campaign", ["campaignId"])
+    .index("by_campaign_and_date", ["campaignId", "date"]),
 });

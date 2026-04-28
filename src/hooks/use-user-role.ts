@@ -17,7 +17,11 @@ export function useUserRole() {
     isStaff: user?.role === "staff",
     isPkl: user?.role === "pkl",
     isRpManager: user?.role === "rp_manager",
+    isAdminIklan: user?.role === "admin_iklan",
     isAdminOrManager: user?.role === "admin" || user?.role === "manager",
+    /** Whether the user can access Ad Profit pages */
+    canAccessAdProfit:
+      user?.role === "admin" || user?.role === "admin_iklan",
     /** Whether the user can add/edit Reward & Punishment records */
     canManageRP:
       user?.role === "admin" ||
@@ -33,7 +37,7 @@ export function useUserRole() {
       user?.role === "admin" ||
       user?.role === "manager" ||
       user?.role === "rp_manager",
-    hasRole: (roles: Array<"admin" | "manager" | "staff" | "pkl" | "rp_manager">) => {
+    hasRole: (roles: Array<"admin" | "manager" | "staff" | "pkl" | "rp_manager" | "admin_iklan">) => {
       return user ? roles.includes(user.role) : false;
     },
   };

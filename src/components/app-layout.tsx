@@ -25,6 +25,7 @@ import {
   GraduationCap,
   Calculator,
   Banknote,
+  Megaphone,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth.ts";
@@ -33,7 +34,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 
 function SidebarContent({ collapsed }: { collapsed: boolean }) {
-  const { user, isAdminOrManager, canViewTasks, isAuthenticated } = useUserRole();
+  const { user, isAdminOrManager, canViewTasks, canAccessAdProfit, isAuthenticated } = useUserRole();
   const { removeUser } = useAuth();
   const { isDemoGuest, exitDemoMode } = useDemoMode();
   const navigate = useNavigate();
@@ -71,9 +72,12 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
     ...(showAdminItems
       ? [{ to: "/finance", icon: Banknote, label: "Finance" }]
       : []),
+    ...((canAccessAdProfit || isDemoGuest)
+      ? [{ to: "/ad-profit", icon: Megaphone, label: "Profit Iklan" }]
+      : []),
   ];
 
-  const availableRoutes = ["/dashboard", "/users", "/tasks", "/projects", "/divisions", "/my-tasks", "/attendance", "/work-logs", "/rewards", "/pkl-kpi", "/analytics", "/calendar", "/ad-calculations", "/finance"];
+  const availableRoutes = ["/dashboard", "/users", "/tasks", "/projects", "/divisions", "/my-tasks", "/attendance", "/work-logs", "/rewards", "/pkl-kpi", "/analytics", "/calendar", "/ad-calculations", "/finance", "/ad-profit"];
 
   return (
     <div className="flex flex-col h-full">

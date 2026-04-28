@@ -26,6 +26,9 @@ import FinanceHistoryPage from "./pages/finance/history/page.tsx";
 import FinanceMenuPage from "./pages/finance/menu/page.tsx";
 import FinanceWalletsPage from "./pages/finance/menu/wallets/page.tsx";
 import FinanceCategoriesPage from "./pages/finance/menu/categories/page.tsx";
+import AdProfitPage from "./pages/ad-profit/page.tsx";
+import AdProfitDetailPage from "./pages/ad-profit/detail/page.tsx";
+import AdProfitReportPage from "./pages/ad-profit/report/page.tsx";
 import { useServiceWorker } from "@/hooks/use-service-worker.ts";
 
 export default function App() {
@@ -53,6 +56,9 @@ export default function App() {
             <Route path="/pkl-kpi" element={<PklKpiPage />} />
             <Route path="/ad-calculations" element={<AdCalculationsPage />} />
             <Route path="/ad-calculations/:id" element={<AdCalculationDetailPage />} />
+            <Route path="/ad-profit" element={<AdProfitPage />} />
+            <Route path="/ad-profit/:id" element={<AdProfitDetailPage />} />
+            <Route path="/ad-profit/report" element={<AdProfitReportPage />} />
           </Route>
           {/* Hashinah Finance – separate layout with bottom nav */}
           <Route path="/finance" element={<FinanceLayout />}>
