@@ -19,6 +19,13 @@ import RewardsPage from "./pages/rewards/page.tsx";
 import PklKpiPage from "./pages/pkl-kpi/page.tsx";
 import AdCalculationsPage from "./pages/ad-calculations/page.tsx";
 import AdCalculationDetailPage from "./pages/ad-calculations/detail/page.tsx";
+import FinanceLayout from "./pages/finance/_components/finance-layout.tsx";
+import FinanceDashboardPage from "./pages/finance/page.tsx";
+import FinanceAddPage from "./pages/finance/add/page.tsx";
+import FinanceHistoryPage from "./pages/finance/history/page.tsx";
+import FinanceMenuPage from "./pages/finance/menu/page.tsx";
+import FinanceWalletsPage from "./pages/finance/menu/wallets/page.tsx";
+import FinanceCategoriesPage from "./pages/finance/menu/categories/page.tsx";
 import { useServiceWorker } from "@/hooks/use-service-worker.ts";
 
 export default function App() {
@@ -46,6 +53,15 @@ export default function App() {
             <Route path="/pkl-kpi" element={<PklKpiPage />} />
             <Route path="/ad-calculations" element={<AdCalculationsPage />} />
             <Route path="/ad-calculations/:id" element={<AdCalculationDetailPage />} />
+          </Route>
+          {/* Hashinah Finance – separate layout with bottom nav */}
+          <Route path="/finance" element={<FinanceLayout />}>
+            <Route index element={<FinanceDashboardPage />} />
+            <Route path="add" element={<FinanceAddPage />} />
+            <Route path="history" element={<FinanceHistoryPage />} />
+            <Route path="menu" element={<FinanceMenuPage />} />
+            <Route path="menu/wallets" element={<FinanceWalletsPage />} />
+            <Route path="menu/categories" element={<FinanceCategoriesPage />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

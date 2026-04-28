@@ -136,4 +136,31 @@ export default defineSchema({
     dayOfMonth: v.number(),
     isActive: v.boolean(),
   }).index("by_calculation", ["calculationId"]),
+
+  // ── Hashinah Finance (completely separate from Tracker) ──
+  financeWallets: defineTable({
+    name: v.string(),
+    initialBalance: v.number(),
+    createdBy: v.id("users"),
+  }).index("by_creator", ["createdBy"]),
+
+  financeCategories: defineTable({
+    name: v.string(),
+    type: v.union(v.literal("income"), v.literal("expense")),
+    createdBy: v.id("users"),
+  }).index("by_creator", ["createdBy"]),
+
+  financeTransactions: defineTable({
+    type: v.union(v.literal("income"), v.literal("expense"), v.literal("transfer")),
+    amount: v.number(),
+    date: v.string(),
+    description: v.optional(v.string()),
+    walletId: v.id("financeWallets"),
+    toWalletId: v.optional(v.id("financeWallets")),
+    categoryId: v.optional(v.id("financeCategories")),
+    createdBy: v.id("users"),
+  })
+    .index("by_creator", ["createdBy"])
+    .index("by_wallet", ["walletId"])
+    .index("by_date", ["date"]),
 });

@@ -12,6 +12,7 @@ import type * as adCalculations from "../adCalculations.js";
 import type * as analytics from "../analytics.js";
 import type * as attendance from "../attendance.js";
 import type * as divisions from "../divisions.js";
+import type * as finance from "../finance.js";
 import type * as helpers from "../helpers.js";
 import type * as holidays from "../holidays.js";
 import type * as projects from "../projects.js";
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   analytics: typeof analytics;
   attendance: typeof attendance;
   divisions: typeof divisions;
+  finance: typeof finance;
   helpers: typeof helpers;
   holidays: typeof holidays;
   projects: typeof projects;
